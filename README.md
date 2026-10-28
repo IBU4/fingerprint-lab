@@ -1,52 +1,32 @@
 # Fingerprint Lab
 
+**[Open Fingerprint Lab](https://fingerprint-lab.pages.dev/)**
 
-**[Launch the live Fingerprint Lab test](https://fingerprint-lab.pages.dev/)**
-Independent, opt-in browser identification laboratory. Not affiliated with Fingerprint.
+Independent browser fingerprinting and tracking research laboratory. Not affiliated with Fingerprint.
 
-## Tests and pages
+## Tests
 
-- [Main lab](index.html): Fingerprint Pro Direct vs 1P Proxy, optional consent-based GA4 with diagnostics and suspected adblocking indicator.
-- [1P Custom Tracking Simulator](tracking-simulator.html): first-party demo ID, FingerprintJS OSS, local behavioral events and session JSON. Demo events are not uploaded; ID is stored in cookie and localStorage.
-- [Privacy and data processing](privacy.html): description of the laboratory's data handling, local storage and external services.
+- **[Fingerprint Pro test](https://fingerprint-lab.pages.dev/)** — compare Direct and first-party proxy identification, inspect visitor IDs and export results. Includes optional Google Analytics 4 diagnostics and adblocking detection.
+- **[1P Custom Tracking Simulator](https://fingerprint-lab.pages.dev/tracking-simulator.html)** — test first-party identification with FingerprintJS OSS, local tracking IDs and behavioral events.
+- **[Privacy and data processing](https://fingerprint-lab.pages.dev/privacy.html)** — information about data processing, local storage and third-party services.
 
-## Fingerprint Pro: two routes
+## How it works
 
-The Fingerprint Pro test UI is in **[index.html](index.html)**:
+The main test offers two Fingerprint Pro connection methods:
 
-- **Direct**: import Fingerprint Pro Agent v4 from the Fingerprint CDN and use its direct EU endpoint.
-- **1P Proxy**: import the same Agent v4 through the Cloudflare Pages Function route `/bridge/web/v4/…` and send the identification request through `/bridge/?region=eu`.
+- **Direct:** the browser communicates directly with Fingerprint.
+- **1P Proxy:** requests pass through the laboratory's Cloudflare Pages proxy.
 
-Select a mode and manually start identification. The SDK is **not imported before a user action**. Each mode keeps its latest result in memory. The on-page history labels which mode produced each VID. Copy VID and export JSON are available in both modes. Data is not saved to localStorage.
+Fingerprint Pro identification starts only when the visitor explicitly initiates a test. The interface shows the results for each method and supports copying visitor IDs and exporting JSON.
 
-**Live URL:** https://fingerprint-lab.pages.dev/
+The tracking simulator demonstrates first-party identification and browser storage. Its demonstration events remain in the browser.
 
-The older `/proxy` and `/proxy.html` URLs redirect to `/?mode=proxy` via small Pages Functions. The former proxy URL is not a separate Fingerprint Pro test page; the tracking simulator is a separate page.
+Cloudflare provides hosting and traffic analytics. Google Analytics 4 is optional and requires separate consent.
 
-## Cloudflare deployment
+## Purpose
 
-The repository is deployed through Cloudflare Pages Git integration. Static output directory is the repository root. Commits to `main` trigger deployments.
+Fingerprint Lab is a public research and testing tool, not a production anti-fraud service. Results reflect the conditions of each test; repeated measurements are needed to assess linkability.
 
-- `functions/bridge/[[path]].js`: experimental same-origin proxy for public Agent download and EU identification requests.
-- `functions/bridge/index.js`: routes the proxy root.
-- `functions/_middleware.js`: server-side HTTP request metadata recorded through Cloudflare Analytics Engine when the `TRAFFIC` binding exists; this middleware runs on requests regardless of the visitor's Fingerprint/GA4 consent.
-- `_routes.json`: routes application requests through Pages Functions to support middleware.
+## Attribution
 
-The `PROXY_SECRET` binding **must be a Cloudflare Pages Production Secret** containing the vendor-issued Fingerprint **Proxy Key**, never a client-visible JavaScript value or a GitHub secret committed in source.
-
-Open `https://fingerprint-lab.pages.dev/bridge/status` to check that the proxy Function is deployed and sees the secret. This endpoint does **not** expose the secret.
-
-The `TRAFFIC` Analytics Engine binding is separate from Fingerprint and does not store VID. It records HTTP request metadata rather than client-side analytics. Cloudflare Web Analytics may also independently record visits. GA4 is implemented with separate opt-in, dynamic gtag.js loading, client_id diagnostics and a suspected-adblocking status. GA4 uses the gtag.js URL hosted by Google Tag Manager; there is no separate GTM container configured in this repository.
-
-## Scope and limitations
-
-- This proxy was built experimentally; it is **not** the official vendor-managed Cloudflare integration.
-- The public lab is a research instrument, not a production anti-fraud solution.
-- A successful identification establishes that the agent ran and the API returned a VID, not that visits are consistently linkable over time.
-- Direct blocking and proxy success are separate observations from FPP effectiveness; FPP changes exposed signals, not the final API response.
-- Only the user-triggered identification runs the Fingerprint Agent. Unexecuted bots will not generate Fingerprint events.
-- The main page uses a `noindex` directive, but its URL and API key are public. Never disclose `PROXY_SECRET`.
-
-## License / attribution
-
-Independent testing of the Fingerprint commercial service using its public client API key. Not an official Fingerprint product or integration.
+Independent testing using Fingerprint Pro and FingerprintJS OSS. Not an official Fingerprint product.

@@ -1,66 +1,70 @@
-// Experimental same-origin proxy for Fingerprint Agent v4 on Cloudflare Pages.
-// NOT the official Fingerprint Cloudflare integration.
-// No arbitrary destinations, no dashboard secret in source code.
-// The upstream may reject requests without the vendor-issued proxy secret.
+// Experimental same-origin Pages Functions proxy for Fingerprint Agent v4.
+// Not the official Cloudflare integration. The provider may require a proxy secret.
 const PUBLIC_KEY = "Frwke9hBtB2iD0ce1G4W";
-const SAFE_SCRIPT = new RegExp("^/web/v4/" + PUBLIC_KEY + "(?:/[a-zA-Z0-9._-]+)?/?$");
+const DOWNLOAD = new RegExp("^/web/v4/" + PUBLIC_KEY + "(?:/[a-zA-Z0-9._-]+)?/?$");
+const LIMIT_BYTES = 262144;
 
 function json(value, status = 200) {
   return new Response(JSON.stringify(value), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" }
+    status, headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff"
+    }
   });
 }
 
 export async function onRequest({ request, env }) {
   const incoming = new URL(request.url);
-  const prefix = "/bridge";
-  const relativePath = incoming.pathname.slice(prefix.length) || "/";
+  const relativePath = incoming.pathname.slice("/bridge".length) || "/";
 
   if (request.method === "GET" && relativePath === "/status") {
-    return json({ ok: true, mode: "experimental-same-origin", region: "eu", authorized: Boolean(env.PROXY_SECRET) });
+    return json({
+      ok: true,
+      implementation: "experimental Pages Functions proxy",
+      region: "eu",
+      vendorProxySecretConfigured: !!env.PROXY_SECRET,
+      routes: "agent GET and v4 API POST"
+    });
   }
 
-  const scriptRequest = request.method === "GET" && SAFE_SCRIPT.test(relativePath);
-  const idRequest = request.method === "POST" && (relativePath === "/" || relativePath === "");
+  const isScript = request.method === "GET" && DOWNLOAD.test(relativePath);
+  // Agent v4 can POST to different API subpaths; the original proxy incorrectly
+  // accepted only POST / and silently discarded the query string.
+  const isIdentification = request.method === "POST" &&
+    /^\/(?:[a-zA-Z0-9._~-]+\/)*[a-zA-Z0-9._~-]*$/.test(relativePath) &&
+    !relativePath.startsWith("/web/");
 
-  if (!scriptRequest && !idRequest) {
-    return json({ error: "unsupported_route_or_method" }, 404);
+  if (!isScript && !isIdentification) {
+    return json({ error: "unsupported_route", method: request.method, path: relativePath }, 404);
   }
 
-  if (idRequest) {
+  if (isIdentification) {
     const origin = request.headers.get("origin");
-    if (origin && origin !== incoming.origin) {
+    if (origin && origin !== incoming.origin)
       return json({ error: "cross_origin_request_not_permitted" }, 403);
-    }
-    const len = Number(request.headers.get("content-length") || "0");
-    if (len > 262144) return json({ error: "request_too_large" }, 413);
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (contentLength > LIMIT_BYTES)
+      return json({ error: "request_too_large" }, 413);
   }
 
-  const upstream = scriptRequest
-    ? new URL("https://api.fpjs.io" + relativePath)
-    : new URL("https://eu.api.fpjs.io/");
-
-  if (idRequest) {
-    // The region is fixed to the EU workspace.
-    upstream.searchParams.set("region", "eu");
-  }
+  const target = new URL("https://" + (isScript ? "api.fpjs.io" : "eu.api.fpjs.io") + relativePath);
+  // Keep the public agent request parameters, including any API key, nonce,
+  // endpoint metadata and session markers supplied by the v4 agent.
+  target.search = incoming.search;
+  if (isIdentification) target.searchParams.set("region", "eu");
 
   const headers = new Headers(request.headers);
-  // Do not forward site cookies, credentials, or spoofed fingerprint proxy headers.
   const cookieHeader = headers.get("cookie") || "";
   headers.delete("cookie");
-  const iidCookie = cookieHeader.split(";").map(x => x.trim()).find(x => x.startsWith("_iidt="));
-  if (iidCookie) headers.set("cookie", iidCookie);
-  headers.delete("authorization");
-  headers.delete("host");
-  headers.delete("origin");
-  headers.delete("referer");
-  headers.delete("FPJS-Proxy-Secret");
-  headers.delete("FPJS-Proxy-Client-IP");
-  headers.delete("FPJS-Proxy-Forwarded-Host");
+  const iid = cookieHeader.split(";").map(x => x.trim()).find(x => x.startsWith("_iidt="));
+  if (iid) headers.set("cookie", iid);
+  for (const name of [
+    "authorization","host","origin","referer","content-length","cf-connecting-ip",
+    "FPJS-Proxy-Secret","FPJS-Proxy-Client-IP","FPJS-Proxy-Forwarded-Host"
+  ]) headers.delete(name);
 
-  if (idRequest) {
+  if (isIdentification) {
     const cfIP = request.headers.get("cf-connecting-ip") || "";
     const pseudo = request.headers.get("cf-pseudo-ipv4");
     const clientIP = cfIP && cfIP === pseudo ? (request.headers.get("cf-connecting-ipv6") || "") : cfIP;
@@ -70,21 +74,24 @@ export async function onRequest({ request, env }) {
   }
 
   try {
-    const response = await fetch(upstream.toString(), {
+    const response = await fetch(target.toString(), {
       method: request.method,
       headers,
-      body: idRequest ? request.body : undefined,
-      redirect: "follow",
+      body: isIdentification ? request.body : undefined,
+      redirect: "follow"
     });
+    // Retain the original API response and make status observable in Network.
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("strict-transport-security");
     responseHeaders.delete("access-control-allow-origin");
     responseHeaders.delete("access-control-allow-credentials");
+    responseHeaders.set("x-lab-upstream-status", String(response.status));
     responseHeaders.set("x-content-type-options", "nosniff");
-    if (idRequest) responseHeaders.set("cache-control", "no-store");
-
+    if (isIdentification) responseHeaders.set("cache-control", "no-store");
+    console.log("fingerprint-lab proxy", request.method, relativePath, "upstream:", response.status);
     return new Response(response.body, { status: response.status, headers: responseHeaders });
   } catch (error) {
-    return json({ error: "upstream_unavailable", message: String(error && error.message || error) }, 502);
+    console.error("fingerprint-lab upstream error", request.method, relativePath, String(error));
+    return json({ error: "upstream_unavailable", message: String(error?.message || error) }, 502);
   }
 }

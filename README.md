@@ -1,4 +1,4 @@
-# Fingerprint Lab.
+# Fingerprint Lab
 
 Independent, opt-in tests of browser identification. Not affiliated with Fingerprint.
 

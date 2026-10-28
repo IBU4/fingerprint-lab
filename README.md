@@ -2,7 +2,7 @@
 
 Independent, opt-in browser identification laboratory. Not affiliated with Fingerprint.
 
-## One page, two routes
+## One page, two routes.
 
 The entire test UI is in **[index.html](index.html)**:
 

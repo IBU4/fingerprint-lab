@@ -1,5 +1,7 @@
 # Fingerprint Lab
 
+
+**[Launch the live Fingerprint Lab test](https://fingerprint-lab.pages.dev/)**
 Independent, opt-in browser identification laboratory. Not affiliated with Fingerprint.
 
 ## One page, two routes.

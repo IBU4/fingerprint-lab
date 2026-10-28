@@ -28,6 +28,11 @@ input[type=text]{width:100%;background:#0c1724;border:1px solid #506579;border-r
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto;background:#0a1420;border:1px solid #31445a;border-radius:10px;padding:15px;font-size:12px;line-height:1.55;color:#c7dcec}
 #compare{color:#bcd2e6;padding-top:12px}.foot{margin-top:30px;line-height:1.7}
+.mode-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.mode-choice label{display:flex;align-items:center;gap:9px;padding:12px;border:1px solid #547486;border-radius:10px;background:#0d1c2a;cursor:pointer;font-size:14px;line-height:1.4}
+.mode-choice label:has(input:checked){border-color:#78e4d4;background:#1e3e46}
+.mode-choice input{accent-color:#78e4d4}
+.mode-choice label:has(input:disabled){cursor:default;opacity:.72}
 a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.box{padding:18px}}
 </style>
 </head>
@@ -36,16 +41,21 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <header>
 <div class="eyebrow">IBU4 / independent browser research</div>
 <h1>Fingerprint Lab</h1>
-<p>Kontrolirano testiranje ponovne identifikacije preglednika kroz sesije, kontejnere i mrežne promjene. Koristi službeni Fingerprint Pro Agent v4, EU regija. Identifikacija se pokreće isključivo ručno.</p>
+<p>Kontrolirano testiranje ponovne identifikacije preglednika kroz sesije, kontejnere i mrežne promjene. Fingerprint Pro Agent v4, EU regija: usporedi izravni pristup i Cloudflare first-party proxy na istoj stranici. Identifikacija se pokreće isključivo ručno.</p>
 </header>
 <div class="grid">
 <section class="box">
 <h2>01 / Pokretanje testa</h2>
 <p><strong>Agent:</strong> Fingerprint v4 · <strong>Regija:</strong> eu</p>
-<p class="muted">Zahtjev šalje podatke usluzi Fingerprint i može biti vidljiv vlasniku testnog workspacea. Nema Google Analyticsa, GTM-a, oglasa ni vlastite baze podataka. Rezultati ostaju na ovoj stranici samo dok je otvorena.</p>
+<div class="mode-choice" role="group" aria-label="Način identifikacije">
+  <label><input type="radio" name="mode" value="direct" checked><span><strong>Direct</strong><br>Fingerprint CDN / API</span></label>
+  <label><input type="radio" name="mode" value="proxy"><span><strong>1P Proxy</strong><br>Cloudflare Pages Function</span></label>
+</div>
+<p class="muted" id="modeInfo">Direktno učitavanje agenta preko Fingerprint CDN-a.</p>
+<p class="muted">Zahtjev šalje podatke usluzi Fingerprint i može biti vidljiv vlasniku testnog workspacea. Nema GA4 ni GTM-a. Cloudflare Web Analytics i serverski middleware mogu bilježiti statistiku prometa. VID i rezultat identifikacije prikazani su samo tijekom ove sesije stranice.</p>
 <label class="check"><input id="consent" type="checkbox"><span>Razumijem da će se na moj zahtjev provesti identifikacija preglednika putem Fingerprint servisa.</span></label>
 <button class="primary" id="run" type="button" disabled>Run identification</button>
-<p class="muted">Ako agent blokiraju uBO ili NoScript, pogreška je također rezultat testa. SDK se ne učitava prije pritiska gumba.</p>
+<p class="muted">Kod oba načina SDK se učitava tek nakon pritiska gumba. Proxy način zahtijeva Cloudflare Pages; blokiranje direktnog načina također je rezultat testa.</p>
 </section>
 <section class="box" aria-live="polite">
 <h2>02 / Rezultat</h2>
@@ -58,7 +68,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 </section>
 <section class="box wide">
 <h2>03 / Usporedba VID-a</h2>
-<p class="muted">Zalijepi VID iz prethodne sesije. Polje se ne sprema na server ni u localStorage.</p>
+<p class="muted">Zalijepi VID iz prethodne sesije ili drugog načina testa. Polje se ne sprema na server ni u localStorage.</p>
 <input id="reference" type="text" spellcheck="false" autocomplete="off" placeholder="Prethodni visitor_id">
 <div id="compare">Nema podataka za usporedbu.</div>
 <p class="muted" id="history">Nema mjerenja u trenutačnoj stranici.</p>
@@ -69,61 +79,159 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <p class="foot">Ovaj projekt nije povezan s tvrtkom Fingerprint. Koristi njihov servis za dobrovoljne tehničke eksperimente. <a href="https://dashboard.fingerprint.com/" target="_blank" rel="noopener noreferrer">Fingerprint Dashboard</a></p>
 </main>
 <script type="module">
-const $=id=>document.getElementById(id);
-let busy=false,agentPromise=null,last=null,visitorId="";
-const history=[];
-function setStatus(text,type=""){ $("status").textContent=text; $("status").className="status "+type; }
-function ready(){ $("run").disabled=busy||!$("consent").checked; }
-$("consent").addEventListener("change",ready);
-function startAgent(){
-  if(!agentPromise){
-    agentPromise=import("https://fpjscdn.net/v4/Frwke9hBtB2iD0ce1G4W")
-      .then(Fingerprint=>Fingerprint.start({region:"eu"}))
-      .catch(err=>{agentPromise=null;throw err;});
+const $ = id => document.getElementById(id);
+const apiKey = "Frwke9hBtB2iD0ce1G4W";
+const modes = {
+  direct: {
+    title: "Direct",
+    description: "Agent s Fingerprint CDN-a; Identification API ide izravno Fingerprintu."
+  },
+  proxy: {
+    title: "1P Proxy",
+    description: "Agent i Identification API kroz /bridge na istom originu; Cloudflare poslužitelj prosljeđuje zahtjeve."
   }
-  return agentPromise;
+};
+let mode = new URLSearchParams(location.search).get("mode") === "proxy" ? "proxy" : "direct";
+let busy = false;
+const agents = { direct: null, proxy: null };
+const latest = { direct: null, proxy: null };
+const historyItems = [];
+
+function setStatus(message, type = "") {
+  $("status").textContent = message;
+  $("status").className = "status " + type;
 }
-function getField(data,...keys){for(const k of keys){if(data&&data[k]!==undefined&&data[k]!==null)return data[k];}return null;}
-function show(id,value){$(id).textContent=value===null||value===undefined||value===""?"—":String(value);}
-function compare(){
- const ref=$("reference").value.trim();
- show("compare",!ref||!visitorId?"Potreban je trenutačni i referentni VID.":ref===visitorId?"PODUDARANJE: isti visitor_id.":"RAZLIČITO: različiti visitor_id.");
+function show(id, value) {
+  $(id).textContent = value === null || value === undefined || value === "" ? "—" : String(value);
 }
-$("reference").addEventListener("input",compare);
-$("run").addEventListener("click",async()=>{
- if(busy||!$("consent").checked)return;
- busy=true;ready();setStatus("Identifikacija u tijeku…","busy");
- const begin=performance.now();
- try{
-  const agent=await startAgent();
-  const data=await agent.get();
-  last=data;
-  const identity=data.identification?.data?.result||data.identification||data;
-  visitorId=String(getField(identity,"visitor_id","visitorId")??getField(data,"visitor_id","visitorId")??"");
-  const event=getField(data,"event_id","request_id","requestId");
-  const found=getField(identity,"visitor_found","visitorFound");
-  show("visitor",visitorId||"(nije vraćen)");show("event",event);show("found",found);
-  show("timing",Math.round(performance.now()-begin)+" ms · "+new Date().toLocaleString("hr-HR"));
-  $("json").textContent=JSON.stringify(data,null,2);
-  $("copy").disabled=!visitorId;$("save").disabled=false;
-  history.unshift({time:new Date().toLocaleString("hr-HR"),vid:visitorId||"(prazan)"});
-  history.splice(10);
-  $("history").textContent=history.map((x,i)=>(i+1)+". "+x.time+" — "+x.vid).join("\n");
-  $("history").style.whiteSpace="pre-wrap";
-  compare();setStatus("Identifikacija završena","good");
- }catch(err){
-  setStatus("Identifikacija nije uspjela","bad");
-  $("json").textContent=(err?.name||"Error")+": "+(err?.message||String(err))+"\n\nProvjeri region, allowed domains, kvotu i uBO/NoScript.";
-  show("timing",Math.round(performance.now()-begin)+" ms");
- }finally{busy=false;ready();}
+function getField(data, ...keys) {
+  for (const key of keys) {
+    if (data && data[key] !== null && data[key] !== undefined) return data[key];
+  }
+  return null;
+}
+function ready() {
+  $("run").disabled = busy || !$("consent").checked;
+  document.querySelectorAll('input[name="mode"]').forEach(r => {
+    r.disabled = busy;
+  });
+}
+function compare() {
+  const ref = $("reference").value.trim();
+  const vid = latest[mode]?.vid || "";
+  $("compare").textContent = !ref || !vid
+    ? "Potreban je trenutačni i referentni VID."
+    : ref === vid ? "PODUDARANJE: isti visitor_id." : "RAZLIČITO: različiti visitor_id.";
+}
+function showResult() {
+  const record = latest[mode];
+  if (!record) {
+    ["visitor", "event", "found", "timing"].forEach(id => show(id, null));
+    $("json").textContent = "Pokreni identifikaciju za prikaz JSON odgovora.";
+    $("copy").disabled = true;
+    $("save").disabled = true;
+    setStatus("Spremno: " + modes[mode].title);
+  } else {
+    show("visitor", record.vid || "(nije vraćen)");
+    show("event", record.event);
+    show("found", record.found);
+    show("timing", record.elapsed + " ms · " + record.time);
+    $("json").textContent = JSON.stringify(record.data, null, 2);
+    $("copy").disabled = !record.vid;
+    $("save").disabled = false;
+    setStatus("Zadnji rezultat: " + modes[mode].title, "good");
+  }
+  compare();
+}
+function chooseMode(nextMode) {
+  if (busy || !modes[nextMode]) return;
+  mode = nextMode;
+  document.querySelectorAll('input[name="mode"]').forEach(r => {
+    r.checked = r.value === mode;
+  });
+  $("modeInfo").textContent = modes[mode].description;
+  $("run").textContent = "Run " + modes[mode].title + " identification";
+  showResult();
+  ready();
+}
+function startAgent(selectedMode) {
+  if (!agents[selectedMode]) {
+    agents[selectedMode] = (async () => {
+      if (selectedMode === "direct") {
+        const Fingerprint = await import("https://fpjscdn.net/v4/" + apiKey);
+        return Fingerprint.start({ region: "eu" });
+      }
+      const origin = location.origin;
+      const Fingerprint = await import(origin + "/bridge/web/v4/" + apiKey);
+      return Fingerprint.start({ region: "eu", endpoints: origin + "/bridge/?region=eu" });
+    })().catch(error => {
+      agents[selectedMode] = null;
+      throw error;
+    });
+  }
+  return agents[selectedMode];
+}
+
+$("consent").addEventListener("change", ready);
+document.querySelectorAll('input[name="mode"]').forEach(r => {
+  r.addEventListener("change", () => {
+    if (r.checked) chooseMode(r.value);
+  });
 });
-$("copy").addEventListener("click",async()=>{if(visitorId)await navigator.clipboard.writeText(visitorId);});
-$("save").addEventListener("click",()=>{
- if(!last)return;
- const url=URL.createObjectURL(new Blob([JSON.stringify(last,null,2)],{type:"application/json"}));
- const a=document.createElement("a");a.href=url;a.download="fingerprint-lab-"+new Date().toISOString().replace(/[:.]/g,"-")+".json";a.click();
- setTimeout(()=>URL.revokeObjectURL(url),1000);
+$("reference").addEventListener("input", compare);
+$("run").addEventListener("click", async () => {
+  if (busy || !$("consent").checked) return;
+  busy = true;
+  ready();
+  const selectedMode = mode;
+  setStatus("Identifikacija: " + modes[selectedMode].title + "…", "busy");
+  const started = performance.now();
+  try {
+    const agent = await startAgent(selectedMode);
+    const data = await agent.get();
+    const identity = data.identification?.data?.result || data.identification || data;
+    const vid = String(getField(identity, "visitor_id", "visitorId") ?? getField(data, "visitor_id", "visitorId") ?? "");
+    const event = getField(data, "event_id", "request_id", "requestId");
+    const found = getField(identity, "visitor_found", "visitorFound");
+    const time = new Date().toLocaleString("hr-HR");
+    const elapsed = Math.round(performance.now() - started);
+    latest[selectedMode] = { data, vid, event, found, time, elapsed };
+    historyItems.unshift({ mode: selectedMode, time, vid: vid || "(prazan)" });
+    historyItems.splice(10);
+    $("history").textContent = historyItems.map((x, i) =>
+      (i + 1) + ". [" + modes[x.mode].title + "] " + x.time + " — " + x.vid
+    ).join("\n");
+    $("history").style.whiteSpace = "pre-wrap";
+    showResult();
+    setStatus("Identifikacija završena: " + modes[selectedMode].title, "good");
+  } catch (error) {
+    latest[selectedMode] = null;
+    showResult();
+    setStatus("Identifikacija nije uspjela: " + modes[selectedMode].title, "bad");
+    $("json").textContent = (error?.name || "Error") + ": " + (error?.message || String(error)) +
+      "\n\nNačin: " + modes[selectedMode].title +
+      "\nProvjeri Network log, Allowed Domains, kvotu i pravila blokiranja.";
+    show("timing", Math.round(performance.now() - started) + " ms");
+  } finally {
+    busy = false;
+    ready();
+  }
 });
+$("copy").addEventListener("click", async () => {
+  const vid = latest[mode]?.vid;
+  if (vid) await navigator.clipboard.writeText(vid);
+});
+$("save").addEventListener("click", () => {
+  const record = latest[mode];
+  if (!record) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(record.data, null, 2)], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "fingerprint-lab-" + mode + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+chooseMode(mode);
 </script>
 </body>
 </html>

@@ -8,11 +8,11 @@ Independent, opt-in browser identification laboratory. Not affiliated with Finge
 
 - [Main lab](index.html): Fingerprint Pro Direct vs 1P Proxy, optional consent-based GA4 with diagnostics and suspected adblocking indicator.
 - [1P Custom Tracking Simulator](tracking-simulator.html): first-party demo ID, FingerprintJS OSS, local behavioral events and session JSON. Demo events are not uploaded; ID is stored in cookie and localStorage.
-- [Privacy and data processing](privacy.html): description of current behavior and outstanding information required for a complete GDPR notice.
+- [Privacy and data processing](privacy.html): description of the laboratory's data handling, local storage and external services.
 
-## Fingerprint Pro: two routes.
+## Fingerprint Pro: two routes
 
-The entire test UI is in **[index.html](index.html)**:
+The Fingerprint Pro test UI is in **[index.html](index.html)**:
 
 - **Direct**: import Fingerprint Pro Agent v4 from the Fingerprint CDN and use its direct EU endpoint.
 - **1P Proxy**: import the same Agent v4 through the Cloudflare Pages Function route `/bridge/web/v4/…` and send the identification request through `/bridge/?region=eu`.

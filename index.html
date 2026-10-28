@@ -34,6 +34,14 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto;b
 .mode-choice input{accent-color:#78e4d4}
 .mode-choice label:has(input:disabled){cursor:default;opacity:.72}
 a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.box{padding:18px}}
+
+.info-section{margin-top:26px}
+.info-section h2{font-size:22px;margin:0 0 14px;color:#eaf1f8}
+.info-section h3{font-size:17px;margin:22px 0 7px;color:#8be7da}
+.info-section p{margin:8px 0 13px}
+.info-section ul{color:#b9c7d7;line-height:1.7;padding-left:23px}
+.info-section li{margin:7px 0}
+.info-section .note{border-left:3px solid #78e4d4;padding-left:14px;margin-top:17px}
 </style>
 </head>
 <body>
@@ -84,6 +92,40 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <pre id="json">Pokreni identifikaciju za prikaz JSON odgovora.</pre>
 </section>
 </div>
+
+<section class="box info-section" aria-labelledby="about-lab">
+<h2 id="about-lab">05 / O ovom laboratoriju</h2>
+<p><strong>Fingerprint Lab</strong> je neovisna, javno dostupna demonstracijska stranica za istraživanje identifikacije preglednika i web-praćenja. Nije internetska trgovina, oglasna mreža ni službeni proizvod tvrtki čije tehnologije testira.</p>
+<p>Na vrhu stranice možeš dobrovoljno pokrenuti test identifikacije i vidjeti odgovor servisa Fingerprint. Možeš odabrati izravan pristup (<strong>Direct</strong>) ili pristup preko poslužitelja ove stranice (<strong>1P Proxy</strong>). Tako se može provjeriti kako preglednik i njegove zaštite reagiraju na različite načine učitavanja iste usluge.</p>
+<p class="note"><strong>Važno:</strong> Fingerprint test pokreće se samo pritiskom na gumb nakon potvrde. Google Analytics 4 učitava se tek uz zasebnu privolu. Cloudflareova infrastruktura i poslužiteljski middleware mogu obraditi podatke o HTTP zahtjevu već pri samom otvaranju stranice, bez JavaScripta i bez pokretanja testa.</p>
+
+<h3>Što je fingerprint preglednika?</h3>
+<p><em>Browser fingerprint</em> ili digitalni otisak preglednika skup je tehničkih signala koje web-stranica može očitati iz preglednika i uređaja. Primjeri uključuju vrstu i verziju preglednika, operacijski sustav, jezik, vremensku zonu, karakteristike zaslona te pojedine mogućnosti prikaza i izvršavanja koda.</p>
+<p>Ti se signali mogu kombinirati kako bi se pokušalo prepoznati isti preglednik pri sljedećem posjetu, čak i kada klasični kolačić nije dostupan. Otisak nije nužno jedinstven ni trajan: može se promijeniti, a dva različita uređaja mogu izgledati slično. Zato rezultat identifikacije nije dokaz stvarnog identiteta osobe.</p>
+<p><strong>Visitor ID (VID)</strong> je identifikator koji servis vraća nakon analize. Isti VID u dva testa znači da ih je servis povezao; različiti VID-ovi ne dokazuju da povezivanje nije moguće drugim metodama.</p>
+
+<h3>Što je web-praćenje?</h3>
+<p>Web-praćenje je bilježenje i, ponekad, povezivanje aktivnosti posjetitelja. Može se koristiti za statistiku posjećenosti, sigurnost i otkrivanje prijevara, personalizaciju ili oglašavanje. Nisu sve primjene iste niti su svi načini praćenja jednako invazivni.</p>
+<ul>
+<li><strong>Kolačići i lokalna pohrana:</strong> preglednik može zadržati identifikator između posjeta.</li>
+<li><strong>JavaScript analitika:</strong> skripta bilježi događaje, primjerice otvaranje stranice ili interakciju.</li>
+<li><strong>Fingerprinting:</strong> sustav pokušava povezati posjete prema tehničkim signalima.</li>
+<li><strong>Poslužiteljska evidencija:</strong> poslužitelj vidi zahtjeve koji do njega stignu, čak i ako su klijentske skripte blokirane.</li>
+</ul>
+
+<h3>Što su Fingerprint Pro, Google Analytics i Cloudflare?</h3>
+<p><strong>Fingerprint Pro</strong> je komercijalna usluga za identifikaciju preglednika i otkrivanje sumnjivih aktivnosti. Ovdje se koristi njezin JavaScript agent. Način <strong>Direct</strong> kontaktira servis izravno, dok <strong>1P Proxy</strong> usmjerava zahtjeve preko Cloudflare Pages Function na domeni laboratorija. Proxy mijenja mrežni put, ali ne uklanja sam fingerprinting.</p>
+<p><strong>Google Analytics 4 (GA4)</strong> Googleova je platforma za analitiku posjeta i događaja. Ovaj laboratorij koristi GA4 uz zasebnu privolu kako bi se moglo provjeriti registrira li analitika posjet iz određenog preglednika. Ugrađena dijagnostika pokazuje učitavanje i inicijalizaciju taga, ali sama ne dokazuje da je Google primio događaj.</p>
+<p><strong>Cloudflare</strong> pruža infrastrukturu na kojoj je ova stranica objavljena. Cloudflare Pages poslužuje sadržaj, Pages Functions omogućuju proxy i middleware, a Analytics Engine može bilježiti metapodatke HTTP zahtjeva. Takvo poslužiteljsko mjerenje ne ovisi o tome dopušta li preglednik izvršavanje Googleova ili Fingerprintova JavaScripta. Ono samo po sebi ne znači da je korisnik prepoznat kroz različite sesije.</p>
+
+<h3>Što su adblockeri?</h3>
+<p><em>Adblockeri</em> su alati koji ograničavaju oglase, trackere ili neželjene dijelove web-stranica. Neki blokiraju mrežne zahtjeve prema poznatim domenama; drugi uklanjaju ili mijenjaju HTML elemente i skripte prije izvršavanja. Pojedini preglednici imaju i vlastitu zaštitu od praćenja, a proširenja poput uBlock Origina ili NoScripta nude dodatne kontrole.</p>
+<p>Blokiranje oglasa, blokiranje trackera i sprječavanje fingerprintinga nisu isto. Preglednik može zaustaviti Google Analytics, a ipak dopustiti Fingerprint Pro preko proxyja. Može blokirati oba JavaScript servisa, dok poslužitelj i dalje prima osnovni HTTP zahtjev. Upravo te razlike laboratorij omogućuje uspoređivati.</p>
+
+<h3>Kako tumačiti rezultate?</h3>
+<p>Testiraj svaki preglednik pod istim uvjetima, zabilježi je li odabran Direct ili 1P Proxy te provjeri GA4 dijagnostiku. <strong>Uspješno učitavanje skripte nije isto što i uspješno praćenje korisnika</strong>, a jedan neuspješan test nije dokaz trajne zaštite. Za pouzdan zaključak potrebna su ponovljena mjerenja i razlikovanje onoga što je stvarno opaženo od pretpostavki.</p>
+<p class="muted">Laboratorij je namijenjen dobrovoljnom tehničkom testiranju. Ne traži stvarno ime, e-poštu ni prijavu korisnika. Rezultate Fingerprint testa možeš kopirati ili spremiti lokalno; poslužiteljske i vanjske analitičke usluge zasebno obrađuju podatke opisane iznad.</p>
+</section>
 <p class="foot">Ovaj projekt nije povezan s tvrtkom Fingerprint. Koristi njihov servis za dobrovoljne tehničke eksperimente. <a href="https://dashboard.fingerprint.com/" target="_blank" rel="noopener noreferrer">Fingerprint Dashboard</a></p>
 </main>
 <script type="module">

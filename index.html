@@ -56,6 +56,12 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <label class="check"><input id="consent" type="checkbox"><span>Razumijem da će se na moj zahtjev provesti identifikacija preglednika putem Fingerprint servisa.</span></label>
 <label class="check" style="margin-top:14px"><input id="gaConsent" type="checkbox"><span>Dopuštam Google Analytics 4 (Google LLC) mjerenje posjeta i interakcija kolačićima. Ova privola nije uvjet za Fingerprint test i može se povući.</span></label>
 <p class="muted" id="gaStatus" aria-live="polite">GA4: isključen (bez privole).</p>
+<details id="gaDiagnostics" style="margin-top:10px">
+<summary style="cursor:pointer;color:#8be7da;font-size:14px">GA4 dijagnostika</summary>
+<pre id="gaLog" aria-live="polite">Čeka privolu za GA4. Nema Google zahtjeva prije privole.</pre>
+<button type="button" id="gaCheck" disabled>Provjeri GA4 tag</button>
+<p class="muted">Provjera taga nije potvrda da je Google primio podatke. HTTP slanje provjeri u Network logu (g/collect).</p>
+</details>
 <button class="primary" id="run" type="button" disabled>Run identification</button>
 <p class="muted">Kod oba načina SDK se učitava tek nakon pritiska gumba. Proxy način zahtijeva Cloudflare Pages; blokiranje direktnog načina također je rezultat testa.</p>
 </section>
@@ -85,6 +91,28 @@ const $ = id => document.getElementById(id);
 const apiKey = "Frwke9hBtB2iD0ce1G4W";
 const gaId = "G-F6JRRE08DC";
 let gaLoaded = false;
+let gaScriptLoaded = false;
+let gaGeneration = 0;
+let gaLogLines = [];
+function gaLog(message) {
+  gaLogLines.push(new Date().toLocaleTimeString("hr-HR") + "  " + message);
+  gaLogLines = gaLogLines.slice(-25);
+  $("gaLog").textContent = gaLogLines.join("\n");
+}
+function gaCheck() {
+  if (!$("gaConsent").checked || !gaScriptLoaded || typeof window.gtag !== "function") {
+    gaLog("GET provjera preskočena: tag nije potvrđeno učitan.");
+    return;
+  }
+  gaLog("gtag get(client_id): zahtjev za povratnu vrijednost...");
+  let answered = false;
+  window.gtag("get", gaId, "client_id", value => {
+    answered = true;
+    gaLog(value ? "GET odgovor: client_id postoji (vrijednost nije prikazana)." :
+      "GET odgovor: client_id nije dostupan.");
+  });
+  setTimeout(() => { if (!answered) gaLog("GET: nema odgovora nakon 5 s (moguće blokiranje ili neinicijaliziran tag)."); }, 5000);
+}
 function gaConsent(granted) {
   return {analytics_storage: granted ? "granted" : "denied",
     ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied"};
@@ -92,6 +120,10 @@ function gaConsent(granted) {
 function gaInit() {
   if (gaLoaded) return;
   gaLoaded = true;
+  gaScriptLoaded = false;
+  const generation = ++gaGeneration;
+  $("gaCheck").disabled = true;
+  gaLog("Privola GA4: DA. Measurement ID: " + gaId);
   window.dataLayer = window.dataLayer || [];
   window.gtag = function(){ window.dataLayer.push(arguments); };
   // Basic Consent Mode: load GA only after explicit opt-in.
@@ -99,14 +131,31 @@ function gaInit() {
   window.gtag("consent", "default", gaConsent(true));
   window.gtag("js", new Date());
   window.gtag("config", gaId, {allow_google_signals:false, allow_ad_personalization_signals:false});
+  gaLog("Config i automatski page_view dodani u dataLayer (ne potvrđuje slanje).");
   const script = document.createElement("script");
   script.async = true;
   script.src = "https://www.googletagmanager.com/gtag/js?id=" + gaId;
-  script.onerror = () => { $("gaStatus").textContent = "GA4: učitavanje blokirano ili neuspješno."; };
+  script.onload = () => {
+    if (generation !== gaGeneration || !$("gaConsent").checked) return;
+    gaScriptLoaded = true;
+    $("gaCheck").disabled = false;
+    gaLog("gtag.js: ONLOAD (skripta preuzeta i izvršena; HTTP collect još nije potvrđen).");
+    $("gaStatus").textContent = "GA4: gtag.js učitan; prijem podataka nije potvrđen.";
+    gaCheck();
+  };
+  script.onerror = () => {
+    if (generation !== gaGeneration) return;
+    gaLog("gtag.js: ONERROR (blokirano ili mrežna pogreška).");
+    $("gaStatus").textContent = "GA4: učitavanje blokirano ili neuspješno.";
+  };
   document.head.appendChild(script);
   $("gaStatus").textContent = "GA4: privola dana; učitavanje pokrenuto.";
 }
 function gaRevoke() {
+  ++gaGeneration;
+  $("gaCheck").disabled = true;
+  gaScriptLoaded = false;
+  gaLog("Privola GA4: POVUČENA. Analitička pohrana postavljena na denied.");
   if (window.gtag) window.gtag("consent", "update", gaConsent(false));
   const names = document.cookie.split(";").map(x => x.trim().split("=")[0])
     .filter(x => x === "_ga" || x.startsWith("_ga_"));
@@ -212,6 +261,7 @@ function startAgent(selectedMode) {
 }
 
 $("consent").addEventListener("change", ready);
+$("gaCheck").addEventListener("click", gaCheck);
 $("gaConsent").addEventListener("change", () => {
   if ($("gaConsent").checked) gaInit();
   else gaRevoke();

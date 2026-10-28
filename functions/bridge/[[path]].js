@@ -74,7 +74,7 @@ export async function onRequest({ request, env }) {
       method: request.method,
       headers,
       body: idRequest ? request.body : undefined,
-      redirect: "manual",
+      redirect: "follow",
     });
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("strict-transport-security");

@@ -52,8 +52,10 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
   <label><input type="radio" name="mode" value="proxy"><span><strong>1P Proxy</strong><br>Cloudflare Pages Function</span></label>
 </div>
 <p class="muted" id="modeInfo">Direktno učitavanje agenta preko Fingerprint CDN-a.</p>
-<p class="muted">Zahtjev šalje podatke usluzi Fingerprint i može biti vidljiv vlasniku testnog workspacea. Nema GA4 ni GTM-a. Cloudflare Web Analytics i serverski middleware mogu bilježiti statistiku prometa. VID i rezultat identifikacije prikazani su samo tijekom ove sesije stranice.</p>
+<p class="muted">Zahtjev šalje podatke usluzi Fingerprint i može biti vidljiv vlasniku testnog workspacea. GA4 je opcionalan i učitava se tek nakon zasebne privole. Cloudflare Web Analytics i serverski middleware mogu bilježiti statistiku prometa. VID i rezultat identifikacije prikazani su samo tijekom ove sesije stranice.</p>
 <label class="check"><input id="consent" type="checkbox"><span>Razumijem da će se na moj zahtjev provesti identifikacija preglednika putem Fingerprint servisa.</span></label>
+<label class="check" style="margin-top:14px"><input id="gaConsent" type="checkbox"><span>Dopuštam Google Analytics 4 (Google LLC) mjerenje posjeta i interakcija kolačićima. Ova privola nije uvjet za Fingerprint test i može se povući.</span></label>
+<p class="muted" id="gaStatus" aria-live="polite">GA4: isključen (bez privole).</p>
 <button class="primary" id="run" type="button" disabled>Run identification</button>
 <p class="muted">Kod oba načina SDK se učitava tek nakon pritiska gumba. Proxy način zahtijeva Cloudflare Pages; blokiranje direktnog načina također je rezultat testa.</p>
 </section>
@@ -81,6 +83,42 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <script type="module">
 const $ = id => document.getElementById(id);
 const apiKey = "Frwke9hBtB2iD0ce1G4W";
+const gaId = "G-F6JRRE08DC";
+let gaLoaded = false;
+function gaConsent(granted) {
+  return {analytics_storage: granted ? "granted" : "denied",
+    ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied"};
+}
+function gaInit() {
+  if (gaLoaded) return;
+  gaLoaded = true;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){ window.dataLayer.push(arguments); };
+  window.gtag("consent", "default", gaConsent(false));
+  window.gtag("js", new Date());
+  window.gtag("config", gaId, {allow_google_signals:false, allow_ad_personalization_signals:false});
+  window.gtag("consent", "update", gaConsent(true));
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = "https://www.googletagmanager.com/gtag/js?id=" + gaId;
+  script.onerror = () => { $("gaStatus").textContent = "GA4: učitavanje blokirano ili neuspješno."; };
+  document.head.appendChild(script);
+  $("gaStatus").textContent = "GA4: privola dana; učitavanje pokrenuto.";
+}
+function gaRevoke() {
+  if (window.gtag) window.gtag("consent", "update", gaConsent(false));
+  const names = document.cookie.split(";").map(x => x.trim().split("=")[0])
+    .filter(x => x === "_ga" || x.startsWith("_ga_"));
+  for (const name of names) {
+    for (const domain of ["", location.hostname, "." + location.hostname]) {
+      document.cookie = name + "=; Max-Age=0; path=/; SameSite=Lax" +
+        (domain ? "; domain=" + domain : "");
+    }
+  }
+  $("gaStatus").textContent = "GA4: privola povučena; za potpuno uklanjanje učitane skripte osvježi stranicu.";
+  // Loaded external JavaScript cannot be unloaded without reloading.
+}
+
 const modes = {
   direct: {
     title: "Direct",
@@ -173,6 +211,10 @@ function startAgent(selectedMode) {
 }
 
 $("consent").addEventListener("change", ready);
+$("gaConsent").addEventListener("change", () => {
+  if ($("gaConsent").checked) gaInit();
+  else gaRevoke();
+});
 document.querySelectorAll('input[name="mode"]').forEach(r => {
   r.addEventListener("change", () => {
     if (r.checked) chooseMode(r.value);

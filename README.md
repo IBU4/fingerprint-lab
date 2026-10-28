@@ -1,33 +1,44 @@
-# Fingerprint Lab.
+# Fingerprint Lab
 
-Independent, opt-in tests of browser identification. Not affiliated with Fingerprint.
+Independent, opt-in browser identification laboratory. Not affiliated with Fingerprint.
 
-## Tests
+## One page, two routes
 
-- **Direct control:** [index.html](index.html) imports the official Fingerprint Agent v4, EU.
-- **Experimental same-origin proxy:** [proxy.html](proxy.html) uses a Cloudflare Pages Function at `/bridge/`.
+The entire test UI is in **[index.html](index.html)**:
 
-Neither test starts identification automatically. Both require an explicit checkbox and button.
+- **Direct**: import Fingerprint Pro Agent v4 from the Fingerprint CDN and use its direct EU endpoint.
+- **1P Proxy**: import the same Agent v4 through the Cloudflare Pages Function route `/bridge/web/v4/…` and send the identification request through `/bridge/?region=eu`.
 
-## Cloudflare Pages setup
+Select a mode and manually start identification. The SDK is **not imported before a user action**. Each mode keeps its latest result in memory. The on-page history labels which mode produced each VID. Copy VID and export JSON are available in both modes. Data is not saved to localStorage.
 
-Deploy this repository via Cloudflare Pages Git integration. Static files are in the repository root. The `functions/bridge/` directory is recognized automatically as Pages Functions when using Git deployments. No paid domain is required for the experimental Pages Function itself.
+**Live URL:** https://fingerprint-lab.pages.dev/
 
-Before testing proxy identification, check `https://YOUR-PAGES-SITE/bridge/status`. It should return JSON with `ok:true`. Then open `https://YOUR-PAGES-SITE/proxy.html`.
+The older `/proxy` and `/proxy.html` URLs redirect to `/?mode=proxy` via small Pages Functions. There is no second HTML test page.
 
-**Important:** The route here is an **experimental, hand-written same-origin reverse proxy**, not the Fingerprint-managed Cloudflare Proxy Integration. Fingerprint's official integration requires a Cloudflare-managed DNS zone, a Worker route, and a vendor-generated proxy secret. Requests sent without an accepted proxy secret may fail server-side authentication (403). An error does not establish that an ad blocker defeated the agent. A success does not prove the service officially supports this integration. The direct control remains unchanged.
+## Cloudflare deployment
 
-If Fingerprint provides a vendor-issued secret for this environment, store it **only** as an encrypted Cloudflare Pages Functions binding named `PROXY_SECRET`. Never commit the secret or paste it into frontend JavaScript.
+The repository is deployed through Cloudflare Pages Git integration. Static output directory is the repository root. Commits to `main` trigger deployments.
 
-The Pages Function forwards only whitelisted agent-download and identification paths, always uses the EU identification region, removes site cookies except the special `_iidt` cookie, and does not forward arbitrary URLs.
+- `functions/bridge/[[path]].js`: experimental same-origin proxy for public Agent download and EU identification requests.
+- `functions/bridge/index.js`: routes the proxy root.
+- `functions/_middleware.js`: opt-in server-side HTTP request metrics via Cloudflare Analytics Engine when the `TRAFFIC` binding exists.
+- `_routes.json`: routes application requests through Pages Functions to support middleware.
 
-## Limitations
+The `PROXY_SECRET` binding **must be a Cloudflare Pages Production Secret** containing the vendor-issued Fingerprint **Proxy Key**, never a client-visible JavaScript value or a GitHub secret committed in source.
 
-- This is not a production anti-fraud implementation.
-- Page metadata instructs compliant search engines not to index the page; the URL remains public.
-- Fingerprint's own processing, retention and privacy policies apply after a visitor consents and launches a test.
-- The current project does not provide visitor account management or a fingerprint database.
+Open `https://fingerprint-lab.pages.dev/bridge/status` to check that the proxy Function is deployed and sees the secret. This endpoint does **not** expose the secret.
+
+The `TRAFFIC` Analytics Engine binding is separate from Fingerprint and does not store VID. It records HTTP request metadata rather than client-side analytics. Cloudflare Web Analytics may also independently record visits. No GA4 or GTM integration has been added.
+
+## Scope and limitations
+
+- This proxy was built experimentally; it is **not** the official vendor-managed Cloudflare integration.
+- The public lab is a research instrument, not a production anti-fraud solution.
+- A successful identification establishes that the agent ran and the API returned a VID, not that visits are consistently linkable over time.
+- Direct blocking and proxy success are separate observations from FPP effectiveness; FPP changes exposed signals, not the final API response.
+- Only the user-triggered identification runs the Fingerprint Agent. Unexecuted bots will not generate Fingerprint events.
+- The page uses a `noindex` directive, but its URL and API key are public. Never disclose `PROXY_SECRET`.
 
 ## License / attribution
 
-This independent lab calls Fingerprint's commercial service through a public API key. It is not an official Fingerprint product or integration.
+Independent testing of the Fingerprint commercial service using its public client API key. Not an official Fingerprint product or integration.

@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1P Custom Tracking – Fingerprint Lab</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#071019;--panel:#0d1721;--panel2:#111f2b;--line:#24384a;
+  --text:#e7eef5;--muted:#91a4b6;--accent:#7eb6df;--good:#9fd3a8;
+  --warn:#e3c77f;--bad:#e2a2a2;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 12% 0%,#12283a 0,transparent 34rem),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+main{max-width:1500px;margin:0 auto;padding:28px 22px 60px}
+header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:24px;margin-bottom:22px
+}
+h1{margin:0 0 8px;font-size:clamp(28px,3vw,42px);letter-spacing:-.025em}
+.subtitle{color:var(--muted);max-width:930px;line-height:1.55}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.badge{
+  padding:6px 9px;border:1px solid var(--line);border-radius:999px;
+  color:var(--muted);font:12px ui-monospace,Consolas,monospace;white-space:nowrap
+}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+button{
+  border:1px solid #3b607e;background:#173149;color:#eef7ff;
+  padding:10px 15px;border-radius:9px;font-weight:650;cursor:pointer
+}
+button:hover{background:#224762}
+button.secondary{background:#111b25;border-color:var(--line);color:#c9d6e1}
+button.danger{background:#351d23;border-color:#70434c;color:#f1c6cc}
+button:disabled{opacity:.55;cursor:not-allowed}
+.status{
+  margin:0 0 18px;padding:13px 15px;border-left:3px solid var(--accent);
+  background:#0b151f;border-radius:7px;color:#b9cad8
+}
+.grid4{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px
+}
+.grid2{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:16px 0
+}
+.card{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--line);border-radius:13px;padding:15px 16px;min-width:0
+}
+.label{
+  color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px
+}
+.value{
+  font:600 14px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;
+  overflow-wrap:anywhere
+}
+.section-title{font-size:17px;font-weight:750;margin:0 0 12px}
+.table-wrap{
+  overflow:auto;border:1px solid var(--line);border-radius:13px;background:#0a131c
+}
+table{width:100%;border-collapse:collapse;min-width:760px}
+thead th{
+  position:sticky;top:0;z-index:2;background:#132333;color:#c7d6e2;
+  text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+  padding:12px 13px;border-bottom:1px solid var(--line)
+}
+tbody td{
+  padding:10px 13px;border-bottom:1px solid #1d2b38;vertical-align:top;
+  font:13px/1.48 ui-monospace,SFMono-Regular,Consolas,monospace
+}
+tbody tr:hover{background:#101d28}
+.ok{color:var(--good);font-weight:700}
+.warn{color:var(--warn);font-weight:700}
+.bad{color:var(--bad);font-weight:700}
+.muted{color:var(--muted)}
+.pipeline{
+  display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;
+  align-items:center;gap:10px
+}
+.pipe-box{
+  border:1px solid var(--line);border-radius:12px;background:#0b141e;
+  padding:14px;min-height:112px
+}
+.pipe-box strong{display:block;margin-bottom:8px}
+.pipe-box ul{margin:0;padding-left:18px;color:#b7c7d5;line-height:1.55;font-size:13px}
+.arrow{font-size:27px;color:#5f829c;text-align:center}
+.event-table{max-height:460px;overflow:auto}
+.profile-list{display:grid;gap:9px}
+.profile-row{
+  display:grid;grid-template-columns:180px minmax(0,1fr);gap:10px;
+  border-bottom:1px solid #1d2b38;padding-bottom:8px
+}
+.profile-row:last-child{border-bottom:0}
+.profile-key{color:var(--muted);font-size:12px}
+.profile-val{font:13px/1.45 ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+.demo-zone{
+  margin-top:16px;border:1px dashed #3a5770;border-radius:13px;padding:18px;
+  background:#0a141d
+}
+.demo-zone h3{margin-top:0}
+.demo-buttons{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.fake-card{
+  margin-top:14px;padding:14px;border:1px solid #263b4e;border-radius:10px;background:#101b26;
+  color:#c6d3de
+}
+.progress{
+  height:8px;background:#0a1118;border-radius:999px;overflow:hidden;border:1px solid #1d2d3b
+}
+.progress > div{height:100%;width:0;background:linear-gradient(90deg,#4f7898,#7eb6df)}
+details{
+  margin-top:16px;border:1px solid var(--line);border-radius:12px;
+  background:var(--panel);overflow:hidden
+}
+summary{cursor:pointer;padding:13px 15px;font-weight:700;color:#cbd9e5}
+pre{
+  margin:0;padding:16px;border-top:1px solid var(--line);max-height:480px;overflow:auto;
+  background:#080e14;color:#c8d4de;
+  font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;
+  white-space:pre-wrap;overflow-wrap:anywhere
+}
+.note{margin-top:18px;color:var(--muted);font-size:13px;line-height:1.6}
+@media(max-width:1050px){
+  .grid4{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}
+}
+@media(max-width:580px){
+  main{padding:20px 12px 40px}.grid4{grid-template-columns:1fr}
+  header{flex-direction:column}.profile-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<main>
+<p><a href="/" style="color:#9bd7ff;text-decoration:none">← Fingerprint Lab / Glavni test</a></p>
+<header>
+  <div>
+    <h1>Tracking simulator</h1>
+    <div class="subtitle">
+      Interaktivna demonstracija 1P (first-party) praćenja: prikazuje podatke iz preglednika i korisničkih interakcija. Demonstracijski događaji i profil ne šalju se analitičkom servisu niti se pohranjuju na poslužitelju. Cloudflare infrastruktura i middleware laboratorija mogu zasebno evidentirati HTTP zahtjeve.
+    </div>
+  </div>
+  <div class="badges">
+    <span class="badge">1P CUSTOM TRACKING</span>
+    <span class="badge">EVENTS NOT UPLOADED</span>
+    <span class="badge">EDUCATIONAL</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button id="startBtn">Pokreni praćenje</button>
+  <button class="secondary" id="pauseBtn">Pauziraj</button>
+  <button class="secondary" id="clearBtn">Očisti događaje</button>
+  <button class="danger" id="resetBtn">Resetiraj identitet</button>
+</div>
+
+<div class="status" id="status">
+  Praćenje nije pokrenuto. Klikni "Pokreni praćenje".
+</div>
+
+<div class="grid4">
+  <div class="card"><div class="label">Tracking ID</div><div class="value" id="trackingId">—</div></div>
+  <div class="card"><div class="label">FingerprintJS ID</div><div class="value" id="fpId">nije dostupan / nije učitan</div></div>
+  <div class="card"><div class="label">Vrijeme na stranici</div><div class="value" id="timeOnPage">0.0 s</div></div>
+  <div class="card"><div class="label">Maks. scroll</div><div class="value" id="maxScroll">0%</div></div>
+</div>
+
+<div class="card">
+  <div class="section-title">Kako nastaje tracking profil</div>
+  <div class="pipeline">
+    <div class="pipe-box">
+      <strong>1. Identifikatori</strong>
+      <ul>
+        <li>localStorage ID</li>
+        <li>cookie ID</li>
+        <li>FingerprintJS ID</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="pipe-box">
+      <strong>2. Browser signali</strong>
+      <ul>
+        <li>UA / platforma</li>
+        <li>jezik / timezone</li>
+        <li>screen / viewport</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="pipe-box">
+      <strong>3. Ponašanje</strong>
+      <ul>
+        <li>klikovi</li>
+        <li>scroll</li>
+        <li>focus / blur</li>
+        <li>vrijeme</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="pipe-box">
+      <strong>4. Profil</strong>
+      <ul>
+        <li>ponovni posjet</li>
+        <li>interes</li>
+        <li>engagement</li>
+        <li>session history</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <div class="section-title">Identifikatori i browser kontekst</div>
+    <div class="profile-list" id="profileList"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Behavioral summary</div>
+    <div class="profile-list">
+      <div class="profile-row"><div class="profile-key">Klikovi</div><div class="profile-val" id="clickCount">0</div></div>
+      <div class="profile-row"><div class="profile-key">Scroll eventi</div><div class="profile-val" id="scrollEvents">0</div></div>
+      <div class="profile-row"><div class="profile-key">Focus promjene</div><div class="profile-val" id="focusEvents">0</div></div>
+      <div class="profile-row"><div class="profile-key">Pointer eventi</div><div class="profile-val" id="pointerEvents">0</div></div>
+      <div class="profile-row"><div class="profile-key">Vidljivost taba</div><div class="profile-val" id="visibilityState">visible</div></div>
+      <div class="profile-row"><div class="profile-key">Najviši engagement</div><div class="profile-val" id="engagement">nizak</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Live event log</div>
+  <div class="table-wrap event-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Vrijeme</th>
+          <th>Event</th>
+          <th>Podatak</th>
+          <th>Što tracker može zaključiti</th>
+        </tr>
+      </thead>
+      <tbody id="eventBody">
+        <tr><td colspan="4" class="muted">Nema događaja.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="demo-zone" id="demoZone">
+  <h3>Interaktivna zona</h3>
+  <p>
+    Klikaj gumbe, skrolaj stranicu, promijeni tab i vrati se. Simulator će događaje prikazivati
+    kao da ih tracker sprema za analitiku.
+  </p>
+  <div class="demo-buttons">
+    <button data-demo="security">Sigurnost</button>
+    <button data-demo="privacy">Privatnost</button>
+    <button data-demo="anonymity">Anonimnost</button>
+    <button data-demo="fingerprint">Fingerprint</button>
+  </div>
+  <div class="fake-card">
+    Ovo je samo testna zona. Simulator ne bilježi tipke ni sadržaj koji bi korisnik eventualno unosio;
+    prati samo demonstracijske događaje poput klikova, scrolla i promjene fokusa.
+  </div>
+  <div style="height:420px"></div>
+  <div class="label">Scroll progress</div>
+  <div class="progress"><div id="scrollBar"></div></div>
+  <div style="height:520px"></div>
+  <div class="fake-card">Dno demo sadržaja — dolazak ovdje generira visoki engagement signal.</div>
+</div>
+
+<details>
+  <summary>Raw tracking session JSON</summary>
+  <pre id="rawJson">{}</pre>
+</details>
+
+<details>
+  <summary>Što ovaj demo namjerno NE radi</summary>
+  <pre>• ne šalje demonstracijske događaje analitičkom servisu
+• ne koristi vanjski analytics servis za ovaj simulator
+• ne sprema event log na server
+• ne bilježi tipke ili tekst koji korisnik upisuje
+• ne snima točne koordinate pointera
+• ne pokušava zaobići browser zaštite
+• ne koristi cross-site tracker</pre>
+</details>
+
+<div class="note">
+  Simulator koristi biblioteku <code>fingerprintjs.min.js</code> (FingerprintJS OSS). Demonstracijski događaji i profil ostaju u memoriji ove kartice; Tracking ID se sprema u kolačić i localStorage preglednika radi demonstracije ponovnog posjeta. HTTP zahtjevi za stranicu i biblioteku mogu biti zabilježeni poslužiteljski.
+</div>
+</main>
+
+<script src="fingerprintjs.min.js"></script>
+<script>
+(() => {
+  const STORAGE_KEY = "tracking_demo_id";
+  const COOKIE_NAME = "tracking_demo_id";
+  const session = {
+    startedAt: null,
+    events: [],
+    identifiers: {},
+    browser: {},
+    summary: {
+      clicks: 0,
+      scrollEvents: 0,
+      focusEvents: 0,
+      pointerEvents: 0,
+      maxScroll: 0,
+      visible: !document.hidden
+    }
+  };
+
+  let running = false;
+  let startPerf = 0;
+  let timer = null;
+  let fpAgent = null;
+  let lastPointerSample = 0;
+
+  const $ = id => document.getElementById(id);
+
+  function randomId() {
+    if (crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "trk_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2);
+  }
+
+  function getCookie(name) {
+    const parts = (document.cookie || "").split(";");
+    for (const part of parts) {
+      const p = part.trim();
+      if (p.startsWith(name + "=")) return decodeURIComponent(p.slice(name.length + 1));
+    }
+    return null;
+  }
+
+  function setCookie(name, value) {
+    try {
+      document.cookie = name + "=" + encodeURIComponent(value) + "; Max-Age=2592000; Path=/; SameSite=Lax";
+      return getCookie(name) === value;
+    } catch {
+      return false;
+    }
+  }
+
+  function getOrCreateTrackingId() {
+    let id = null;
+    let localStorageStatus = "nedostupan";
+    let cookieStatus = "nedostupan";
+
+    try {
+      id = localStorage.getItem(STORAGE_KEY);
+      if (id) localStorageStatus = "postojeći ID";
+    } catch {}
+
+    const cookieId = getCookie(COOKIE_NAME);
+    if (!id && cookieId) id = cookieId;
+
+    if (!id) id = randomId();
+
+    try {
+      localStorage.setItem(STORAGE_KEY, id);
+      localStorageStatus = "ID spremljen";
+    } catch {
+      localStorageStatus = "blokirano";
+    }
+
+    cookieStatus = setCookie(COOKIE_NAME, id) ? "ID spremljen" : "blokirano / file://";
+
+    session.identifiers.trackingId = id;
+    session.identifiers.localStorage = localStorageStatus;
+    session.identifiers.cookie = cookieStatus;
+
+    return id;
+  }
+
+  function browserContext() {
+    return {
+      url: location.href,
+      protocol: location.protocol,
+      referrer: document.referrer || "(nema)",
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      languages: navigator.languages,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      screen: screen.width + "×" + screen.height,
+      viewport: innerWidth + "×" + innerHeight,
+      devicePixelRatio: devicePixelRatio,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      cookieEnabled: navigator.cookieEnabled
+    };
+  }
+
+  function addProfileRow(key, value) {
+    const row = document.createElement("div");
+    row.className = "profile-row";
+    const k = document.createElement("div");
+    k.className = "profile-key";
+    k.textContent = key;
+    const v = document.createElement("div");
+    v.className = "profile-val";
+    v.textContent = String(value);
+    row.append(k, v);
+    $("profileList").appendChild(row);
+  }
+
+  function renderProfile() {
+    $("profileList").innerHTML = "";
+    const b = session.browser;
+    const i = session.identifiers;
+
+    addProfileRow("Tracking ID", i.trackingId || "—");
+    addProfileRow("localStorage", i.localStorage || "—");
+    addProfileRow("Cookie", i.cookie || "—");
+    addProfileRow("FingerprintJS", i.fingerprint || "nije dostupan");
+    addProfileRow("URL", b.url || "—");
+    addProfileRow("Referrer", b.referrer || "—");
+    addProfileRow("User-Agent", b.userAgent || "—");
+    addProfileRow("Platforma", b.platform || "—");
+    addProfileRow("Jezik", b.language || "—");
+    addProfileRow("Timezone", b.timezone || "—");
+    addProfileRow("Screen", b.screen || "—");
+    addProfileRow("Viewport", b.viewport || "—");
+  }
+
+  function elapsed() {
+    return running && startPerf ? (performance.now() - startPerf) / 1000 : 0;
+  }
+
+  function logEvent(type, data, inference) {
+    if (!running) return;
+
+    const evt = {
+      t: Number(elapsed().toFixed(2)),
+      type,
+      data,
+      inference
+    };
+    session.events.push(evt);
+
+    if ($("eventBody").children.length === 1 &&
+        $("eventBody").children[0].children.length === 1) {
+      $("eventBody").innerHTML = "";
+    }
+
+    const tr = document.createElement("tr");
+    [evt.t.toFixed(2) + " s", type, data, inference].forEach(text => {
+      const td = document.createElement("td");
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    $("eventBody").prepend(tr);
+
+    updateRaw();
+  }
+
+  function updateSummary() {
+    $("clickCount").textContent = session.summary.clicks;
+    $("scrollEvents").textContent = session.summary.scrollEvents;
+    $("focusEvents").textContent = session.summary.focusEvents;
+    $("pointerEvents").textContent = session.summary.pointerEvents;
+    $("visibilityState").textContent = document.hidden ? "hidden" : "visible";
+    $("maxScroll").textContent = Math.round(session.summary.maxScroll) + "%";
+
+    const score =
+      session.summary.clicks * 2 +
+      session.summary.scrollEvents +
+      session.summary.focusEvents +
+      Math.floor(session.summary.maxScroll / 25);
+
+    $("engagement").textContent = score >= 12 ? "visok" : score >= 5 ? "srednji" : "nizak";
+    updateRaw();
+  }
+
+  function updateRaw() {
+    const out = {
+      startedAt: session.startedAt,
+      identifiers: session.identifiers,
+      browser: session.browser,
+      summary: session.summary,
+      events: session.events
+    };
+    $("rawJson").textContent = JSON.stringify(out, null, 2);
+  }
+
+  function scrollPercent() {
+    const h = document.documentElement.scrollHeight - innerHeight;
+    if (h <= 0) return 100;
+    return Math.max(0, Math.min(100, (scrollY / h) * 100));
+  }
+
+  async function tryFingerprint() {
+    if (typeof FingerprintJS === "undefined") {
+      session.identifiers.fingerprint = "biblioteka nije učitana";
+      $("fpId").textContent = "biblioteka nije učitana";
+      renderProfile();
+      updateRaw();
+      return;
+    }
+
+    try {
+      if (!fpAgent) fpAgent = await FingerprintJS.load();
+      const result = await fpAgent.get();
+      session.identifiers.fingerprint = result.visitorId;
+      $("fpId").textContent = result.visitorId;
+      renderProfile();
+      logEvent("fingerprint", result.visitorId, "dodatni stabilniji identifikator browsera");
+    } catch (e) {
+      session.identifiers.fingerprint = "greška: " + (e.message || String(e));
+      $("fpId").textContent = "greška";
+      renderProfile();
+      updateRaw();
+    }
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    startPerf = performance.now();
+    session.startedAt = new Date().toISOString();
+    session.browser = browserContext();
+
+    const id = getOrCreateTrackingId();
+    $("trackingId").textContent = id;
+    renderProfile();
+
+    $("status").textContent =
+      "Praćenje je aktivno. Događaji se prikazuju u ovoj kartici i ne šalju se analitičkom servisu.";
+
+    logEvent("page_view", location.pathname || location.href, "posjet stranici / početak sesije");
+
+    timer = setInterval(() => {
+      $("timeOnPage").textContent = elapsed().toFixed(1) + " s";
+      updateRaw();
+    }, 250);
+
+    tryFingerprint();
+    updateSummary();
+  }
+
+  function pause() {
+    if (!running) return;
+    logEvent("tracking_pause", "manual", "simulator zaustavljen");
+    running = false;
+    clearInterval(timer);
+    $("status").textContent = "Praćenje je pauzirano.";
+  }
+
+  function clearEvents() {
+    session.events = [];
+    $("eventBody").innerHTML = '<tr><td colspan="4" class="muted">Nema događaja.</td></tr>';
+    updateRaw();
+  }
+
+  function resetIdentity() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try {
+      document.cookie = COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Lax";
+    } catch {}
+    session.identifiers = {};
+    $("trackingId").textContent = "resetiran";
+    $("fpId").textContent = "nije dostupan / nije učitan";
+    $("status").textContent =
+      "Tracking identitet je resetiran gdje je to browser dopustio. Ponovno pokreni tracking za novi ID.";
+    renderProfile();
+    updateRaw();
+  }
+
+  $("startBtn").addEventListener("click", start);
+  $("pauseBtn").addEventListener("click", pause);
+  $("clearBtn").addEventListener("click", clearEvents);
+  $("resetBtn").addEventListener("click", resetIdentity);
+
+  document.querySelectorAll("[data-demo]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      session.summary.clicks++;
+      logEvent(
+        "click",
+        'button="' + btn.dataset.demo + '"',
+        "izražen interes za određenu temu"
+      );
+      updateSummary();
+    });
+  });
+
+  document.addEventListener("click", e => {
+    if (!running) return;
+    if (e.target.closest("[data-demo]")) return;
+    if (e.target.closest(".toolbar")) return;
+    session.summary.clicks++;
+    const tag = e.target.tagName ? e.target.tagName.toLowerCase() : "element";
+    logEvent("click", tag, "interakcija sa sadržajem");
+    updateSummary();
+  }, true);
+
+  let lastScrollBucket = -1;
+  addEventListener("scroll", () => {
+    if (!running) return;
+    const pct = scrollPercent();
+    session.summary.maxScroll = Math.max(session.summary.maxScroll, pct);
+    $("scrollBar").style.width = pct + "%";
+
+    const bucket = Math.floor(pct / 25) * 25;
+    if (bucket !== lastScrollBucket) {
+      lastScrollBucket = bucket;
+      session.summary.scrollEvents++;
+      logEvent("scroll", Math.min(100, bucket) + "%", "dubina čitanja / engagement");
+      updateSummary();
+    } else {
+      updateSummary();
+    }
+  }, {passive:true});
+
+  addEventListener("focus", () => {
+    if (!running) return;
+    session.summary.focusEvents++;
+    logEvent("focus", "window focused", "korisnik se vratio na stranicu");
+    updateSummary();
+  });
+
+  addEventListener("blur", () => {
+    if (!running) return;
+    session.summary.focusEvents++;
+    logEvent("blur", "window blurred", "korisnik je napustio aktivni prozor/tab");
+    updateSummary();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!running) return;
+    session.summary.visible = !document.hidden;
+    logEvent(
+      "visibilitychange",
+      document.visibilityState,
+      document.hidden ? "tab više nije vidljiv" : "tab je ponovno vidljiv"
+    );
+    updateSummary();
+  });
+
+  addEventListener("pointermove", () => {
+    if (!running) return;
+    const now = performance.now();
+    if (now - lastPointerSample < 1000) return;
+    lastPointerSample = now;
+    session.summary.pointerEvents++;
+    updateSummary();
+  }, {passive:true});
+
+  session.browser = browserContext();
+  renderProfile();
+  updateRaw();
+})();
+</script>
+</body>
+</html>

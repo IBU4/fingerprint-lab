@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>Privatnost — Fingerprint Lab</title>
 <style>body{background:#0c1420;color:#e4edf5;font:16px/1.65 system-ui,sans-serif;margin:0}main{max-width:800px;margin:auto;padding:28px 20px 70px}a{color:#8be7da}h1,h2{line-height:1.25}h2{margin-top:30px}p,li{max-width:76ch}.note{border-left:3px solid #8be7da;padding-left:14px;color:#c4d3de}</style></head><body><main>
-<p><a href="/">← Fingerprint Lab</a> · <a href="/tracking-simulator.html">Tracking simulator</a></p>
+<p><a href="/">← Fingerprint Lab</a> · <a href="/tracking-simulator.html">Tracking simulator</a> · <a href="/fingerprintjs-raw.html">FingerprintJS raw data</a></p>
 <h1>Privatnost i obrada podataka</h1>
 <p class="note">Fingerprint Lab javni je, neovisni istraživački laboratorij. Ovdje je opisano kako rade testovi, lokalna pohrana i povezane usluge.</p>
 <h2>Otvaranje stranice</h2>
@@ -12,6 +12,8 @@
 <p>GA4 skripta učitava se tek nakon zasebne označene privole. Stranica inicijalizira GA4, omogućuje analitičku pohranu i šalje standardni page_view; oglasna pohrana i personalizacijski signali postavljeni su na denied. Povlačenje privole postavlja analitičku pohranu na denied i pokušava ukloniti lokalne GA kolačiće. Već učitanu skriptu nije moguće potpuno ukloniti bez osvježavanja stranice. Dijagnostika i oznaka sumnje na adblocking nisu dokaz da je događaj zaprimljen ili blokiran.</p>
 <h2>1P Custom Tracking Simulator</h2>
 <p>Simulator koristi lokalno posluženu FingerprintJS OSS biblioteku. Demonstracijski profil i događaji ostaju u memoriji kartice i ne šalju se kao analitički događaji na poslužitelj. Simulator sprema demonstracijski Tracking ID u localStorage i kolačić s trajanjem do 30 dana; tipka za resetiranje identiteta služi uklanjanju tog identiteta. HTTP zahtjevi za stranicu i datoteku biblioteke zasebno prolaze kroz Cloudflare infrastrukturu i middleware.</p>
+<h2>FingerprintJS OSS — sirove komponente</h2>
+<p>Na zasebnoj stranici može se ručno pokrenuti lokalno mjerenje FingerprintJS OSS bibliotekom koju poslužuje ova domena. Komponente, preglednikov kontekst i raw JSON prikazuju se u kartici; stranica ne šalje te rezultate Fingerprint Pro API-ju i ne sprema vlastite identifikatore u cookies ili localStorage. Korisnik ih može kopirati ili preuzeti. Cloudflare poslužuje stranicu i skriptu te može evidentirati njihove HTTP zahtjeve.</p>
 <h2>Kontakt</h2>
 <p>Za pitanja o privatnosti i obradi podataka: <a href="mailto:31tidytgv@mozmail.com">31tidytgv@mozmail.com</a>.</p>
 <h2>Vanjske usluge i daljnje informacije</h2>

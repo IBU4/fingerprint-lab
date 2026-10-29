@@ -62,10 +62,11 @@ export async function onRequestPost({ request, env }) {
       method: "GET",
       headers: {
         "authorization": "Bearer " + secretKey,
-        "accept": "application/json"
+        "accept": "application/json",
+        "cache-control": "no-store",
+        "pragma": "no-cache"
       },
-      redirect: "error",
-      cache: "no-store"
+      redirect: "error"
     });
   } catch (error) {
     // Do not expose the request, its Authorization header or the upstream body.

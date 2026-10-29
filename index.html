@@ -24,7 +24,7 @@ button:disabled{opacity:.46;cursor:not-allowed}.primary{background:#78e4d4;borde
 .field{margin:17px 0}.field span{display:block;font-size:13px;color:#9fb5c9;margin-bottom:6px}
 .field strong{font:600 15px ui-monospace,Consolas,monospace;color:#dfeafa;overflow-wrap:anywhere}
 #visitor{color:#80ead5;font-size:18px}
-input[type=text]{width:100%;background:#0c1724;border:1px solid #506579;border-radius:9px;padding:12px;color:white;font:15px ui-monospace,monospace}
+input[type=text],input[type=password]{width:100%;background:#0c1724;border:1px solid #506579;border-radius:9px;padding:12px;color:white;font:15px ui-monospace,monospace}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto;background:#0a1420;border:1px solid #31445a;border-radius:10px;padding:15px;font-size:12px;line-height:1.55;color:#c7dcec}
 #compare{color:#bcd2e6;padding-top:12px}.foot{margin-top:30px;line-height:1.7}
@@ -84,11 +84,27 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <div class="actions"><button type="button" id="copy" disabled>Kopiraj VID</button><button type="button" id="save" disabled>Spremi JSON</button></div>
 </section>
 <section class="box wide">
+<h2>03 / Server Lab — neovisni dohvat</h2>
+<p class="muted">Zaseban eksperimentalni dohvat Fingerprint Server API v4 događaja. Ne mijenja postojeći Fingerprint Agent, Direct ili 1P Proxy i ne pokreće novu identifikaciju. Koristi samo vlastitu Cloudflare funkciju <code>/server-lab/event</code>.</p>
+<label class="field" for="serverLabEvent"><span>Event ID — automatski iz sekcije 02 ili ručni unos</span></label>
+<input id="serverLabEvent" type="text" spellcheck="false" autocomplete="off" placeholder="event_id">
+<label class="field" for="serverLabToken"><span>Privatni Lab token (nije Fingerprint API ključ)</span></label>
+<input id="serverLabToken" type="password" spellcheck="false" autocomplete="off" placeholder="LAB_EVENT_ACCESS_TOKEN">
+<p class="muted">Za dohvat su potrebni zasebni Cloudflare Secrets <code>FP_SERVER_API_KEY</code> i <code>LAB_EVENT_ACCESS_TOKEN</code>. Fingerprint API ključ nikada se ne unosi na ovu stranicu. Dostupni Smart Signals i raw atributi ovise o planu.</p>
+<div class="actions">
+<button id="serverLabRun" type="button" disabled>Dohvati Server Event</button>
+<button id="serverLabCopy" type="button" disabled>Kopiraj serverski JSON</button>
+<button id="serverLabSave" type="button" disabled>Spremi serverski JSON</button>
+</div>
+<p class="muted" id="serverLabStatus" role="status" aria-live="polite">Dohvat još nije pokrenut.</p>
+<pre id="serverLabJson">Nema dohvaćenog serverskog odgovora.</pre>
+<div hidden aria-hidden="true">
 <h2>03 / Usporedba VID-a</h2>
 <p class="muted">Zalijepi VID iz prethodne sesije ili drugog načina testa. Polje se ne sprema na server ni u localStorage.</p>
 <input id="reference" type="text" spellcheck="false" autocomplete="off" placeholder="Prethodni visitor_id">
 <div id="compare">Nema podataka za usporedbu.</div>
 <p class="muted" id="history">Nema mjerenja u trenutačnoj stranici.</p>
+</div>
 <h2>04 / Izvorni odgovor agenta</h2>
 <pre id="json">Pokreni identifikaciju za prikaz JSON odgovora.</pre>
 </section>
@@ -397,5 +413,6 @@ $("save").addEventListener("click", () => {
 });
 chooseMode(mode);
 </script>
+<script src="/server-lab-ui.js" defer></script>
 </body>
 </html>

@@ -50,13 +50,18 @@ export async function onRequestPost({ request, env }) {
   if (!/^[A-Za-z0-9._-]{8,128}$/.test(eventId))
     return reply({ error: "invalid_event_id" }, 400);
 
+  // Trim common copy/paste whitespace; never expose the server API key to the client.
+  const secretKey = env.FP_SERVER_API_KEY.trim();
+  if (!secretKey || /[\r\n]/.test(secretKey))
+    return reply({ error: "fingerprint_secret_key_invalid_format" }, 503);
+
   const endpoint = "https://eu.api.fpjs.io/v4/events/" + encodeURIComponent(eventId);
   let upstream;
   try {
     upstream = await fetch(endpoint, {
       method: "GET",
       headers: {
-        "authorization": "Bearer " + env.FP_SERVER_API_KEY,
+        "authorization": "Bearer " + secretKey,
         "accept": "application/json"
       },
       redirect: "error",

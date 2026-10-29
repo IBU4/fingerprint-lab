@@ -9,7 +9,7 @@ Independent browser fingerprinting and tracking research laboratory. Not affilia
 - **FingerprintJS OSS Raw Components** — inspect individual browser components, errors, timing, and locally export the complete raw JSON.
 - **Privacy and data processing** — information about data processing, local storage and third-party services.
 
-## How it works?
+## How it works
 
 The main test offers two Fingerprint Pro connection methods:
 

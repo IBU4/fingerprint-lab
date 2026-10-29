@@ -19,7 +19,13 @@ button:hover{background:#224762}button.secondary{background:#111b25;border-color
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:#0a131c}table{width:100%;border-collapse:collapse;min-width:860px}
 thead th{position:sticky;top:0;z-index:2;background:#132333;color:#c7d6e2;text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:12px 13px;border-bottom:1px solid var(--line)}
 tbody td{padding:11px 13px;border-bottom:1px solid #1d2b38;vertical-align:top;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}tbody tr:hover{background:#101d28}.component{color:#dce9f3;font-weight:700}.ok{color:var(--good)}.err{color:var(--bad)}
-.value-cell{max-width:760px;white-space:pre-wrap;overflow-wrap:anywhere}details{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.value-cell{max-width:760px;white-space:pre-wrap;overflow-wrap:anywhere}
+.canvas-preview-list{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.canvas-preview-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:100%}
+.canvas-preview-label{font:600 12px/1.3 system-ui,sans-serif;color:var(--muted)}
+.canvas-preview-image{display:block;max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#fff}
+.canvas-preview-note{font:12px/1.4 ui-monospace,Consolas,monospace;color:var(--muted)}
+details{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 summary{cursor:pointer;padding:13px 15px;font-weight:700;color:#cbd9e5}pre{margin:0;padding:16px;border-top:1px solid var(--line);max-height:550px;overflow:auto;background:#080e14;color:#c8d4de;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 .note{margin-top:20px;color:var(--muted);font-size:13px;line-height:1.55}a{color:var(--accent)}.search{width:min(420px,100%);padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#0b141d;color:var(--text);outline:none}
 @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}header{flex-direction:column}}@media(max-width:560px){main{padding:20px 12px 40px}.grid{grid-template-columns:1fr}}
@@ -105,6 +111,59 @@ function renderContext(){
   $("context").textContent=JSON.stringify(c,null,2)
 }
 
+function renderCanvasCell(cell, value){
+  // FingerprintJS OSS canvas geometry/text return PNG data URLs when available.
+  // Only the table presentation changes; the source result and raw JSON remain untouched.
+  if(!value || typeof value!=="object" || Array.isArray(value)) return false;
+  const hasCanvasFields=["geometry","text"].some(key=>Object.prototype.hasOwnProperty.call(value,key));
+  if(!hasCanvasFields) return false;
+
+  const winding=document.createElement("div");
+  winding.textContent="winding: "+safeString(value.winding);
+  cell.appendChild(winding);
+
+  const previews=document.createElement("div");
+  previews.className="canvas-preview-list";
+  for(const key of ["geometry","text"]){
+    const item=document.createElement("div");
+    item.className="canvas-preview-item";
+    const label=document.createElement("span");
+    label.className="canvas-preview-label";
+    label.textContent="canvas."+key;
+    item.appendChild(label);
+
+    const raw=value[key];
+    // PNG is what HTMLCanvasElement.toDataURL() produces by default.
+    // Require a base64 image data URL; never load arbitrary URLs from component data.
+    if(typeof raw==="string" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(raw)){
+      const img=document.createElement("img");
+      img.className="canvas-preview-image";
+      img.alt="FingerprintJS Canvas "+key+" — stvarni izmjereni prikaz";
+      img.loading="lazy";
+      img.decoding="async";
+      img.onerror=()=>{
+        img.remove();
+        const note=document.createElement("span");
+        note.className="canvas-preview-note";
+        note.textContent="Slika se ne može dekodirati.";
+        item.appendChild(note);
+      };
+      img.src=raw;
+      item.appendChild(img);
+    }else{
+      const note=document.createElement("span");
+      note.className="canvas-preview-note";
+      note.textContent=typeof raw==="string" && raw.startsWith("data:")
+        ? "Nepodržan slikovni format."
+        : safeString(raw);
+      item.appendChild(note);
+    }
+    previews.appendChild(item);
+  }
+  cell.appendChild(previews);
+  return true;
+}
+
 function renderTable(components){
   const rows=Object.entries(components);
   $("count").textContent=rows.length;
@@ -118,7 +177,11 @@ function renderTable(components){
     const d=document.createElement("td");d.className="value-cell";
     const e=document.createElement("td");
     if("error" in component){c.textContent="ERROR";c.className="err";d.textContent=describeError(component.error)}
-    else{c.textContent="OK";c.className="ok";d.textContent=safeString(component.value)}
+    else{
+      c.textContent="OK";c.className="ok";
+      if(name!=="canvas" || !renderCanvasCell(d,component.value))
+        d.textContent=safeString(component.value)
+    }
     e.textContent=typeof component.duration==="number"?component.duration.toFixed(2)+" ms":"—";
     tr.append(a,b,c,d,e);$("tbody").appendChild(tr)
   });

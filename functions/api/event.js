@@ -50,9 +50,10 @@ export async function onRequestPost({ request, env }) {
   if (!/^[A-Za-z0-9._-]{8,128}$/.test(eventId))
     return reply({ error: "invalid_event_id" }, 400);
 
+  const endpoint = "https://eu.api.fpjs.io/v4/events/" + encodeURIComponent(eventId);
+  let upstream;
   try {
-    const endpoint = "https://eu.api.fpjs.io/v4/events/" + encodeURIComponent(eventId);
-    const upstream = await fetch(endpoint, {
+    upstream = await fetch(endpoint, {
       method: "GET",
       headers: {
         "authorization": "Bearer " + env.FP_SERVER_API_KEY,
@@ -61,19 +62,33 @@ export async function onRequestPost({ request, env }) {
       redirect: "error",
       cache: "no-store"
     });
-    if (!upstream.ok) {
-      // Never forward the upstream body, headers, or API key to the browser.
-      const status = upstream.status;
-      return reply({
-        error: status === 404 ? "event_not_found" :
-          status === 403 ? "fingerprint_key_or_region_rejected" :
-          status === 429 ? "fingerprint_rate_limited" : "fingerprint_upstream_error",
-        upstreamStatus: status
-      }, status === 404 ? 404 : status === 429 ? 429 : 502);
-    }
-    const result = await upstream.json();
-    return reply(result);
-  } catch (_) {
-    return reply({ error: "fingerprint_upstream_unavailable" }, 502);
+  } catch (error) {
+    // Do not expose the request, its Authorization header or the upstream body.
+    console.error("Server Event upstream transport failed:", error?.name || "Error");
+    return reply({ error: "fingerprint_transport_failure", stage: "upstream_fetch" }, 502);
   }
+  if (!upstream.ok) {
+    const status = upstream.status;
+    return reply({
+      error: status === 400 ? "fingerprint_bad_request" :
+        status === 401 || status === 403 ? "fingerprint_auth_or_permission_rejected" :
+        status === 404 ? "event_not_found" :
+        status === 429 ? "fingerprint_rate_limited" : "fingerprint_upstream_error",
+      upstreamStatus: status,
+      stage: "upstream_http"
+    }, status === 404 ? 404 : status === 429 ? 429 : 502);
+  }
+  let result;
+  try {
+    result = await upstream.json();
+  } catch (error) {
+    console.error("Server Event upstream response parsing failed:", error?.name || "Error");
+    return reply({
+      error: "fingerprint_invalid_json_response",
+      upstreamStatus: upstream.status,
+      contentType: (upstream.headers.get("content-type") || "").slice(0, 80),
+      stage: "upstream_response"
+    }, 502);
+  }
+  return reply(result);
 }

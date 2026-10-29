@@ -332,7 +332,7 @@ function startAgent(selectedMode) {
       }
       const origin = location.origin;
       const Fingerprint = await import(origin + "/bridge/web/v4/" + apiKey);
-      return Fingerprint.start({ region: "eu", endpoints: origin + "/bridge/?region=eu" });
+      return Fingerprint.start({ region: "eu", endpoints: Fingerprint.withoutDefault(origin + "/bridge/?region=eu") });
     })().catch(error => {
       agents[selectedMode] = null;
       throw error;

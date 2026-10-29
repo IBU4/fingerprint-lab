@@ -29,7 +29,7 @@ summary{cursor:pointer;padding:13px 15px;font-weight:700;color:#cbd9e5}pre{margi
 <main>
 <p class="note" style="margin-top:0"><a href="/">← Fingerprint Lab / Glavni test</a> · <a href="/tracking-simulator.html">Tracking simulator</a> · <a href="/privacy.html">Privatnost</a></p>
 <header>
-<div><h1>FingerprintJS OSS — sirove komponente</h1><div class="subtitle">Samostalni pregled svih komponenti koje vraća FingerprintJS OSS. Biblioteka v5.3.0 poslužuje se s ove domene (<code>/fingerprintjs.min.js</code>), a mjerenje se pokreće ručno. Rezultati ostaju u ovoj kartici dok ih sam ne kopiraš ili spremiš.</div></div>
+<div><h1>FingerprintJS OSS — sirove komponente</h1><div class="subtitle">Samostalni pregled svih komponenti koje vraća FingerprintJS OSS. Biblioteka v5.3.0 poslužuje se s ove domene (<code>/rawdata.min.js</code>), a mjerenje se pokreće ručno. Rezultati ostaju u ovoj kartici dok ih sam ne kopiraš ili spremiš.</div></div>
 <span class="badge">FIRST-PARTY / OSS</span>
 </header>
 
@@ -57,13 +57,13 @@ summary{cursor:pointer;padding:13px 15px;font-weight:700;color:#cbd9e5}pre{margi
 </table>
 </div>
 
-<details><summary>Raw FingerprintJS rezultat</summary><pre id="raw">Nema rezultata.</pre></details>
+<details><summary>Raw FingerprintJS rezultat</summary><div style="padding:0 15px 14px"><button class="secondary" type="button" id="copyRawBtn">Copy to clipboard — raw JSON</button></div><pre id="raw">Nema rezultata.</pre></details>
 <details><summary>Osnovni browser kontekst</summary><pre id="context"></pre></details>
 
 <div class="note">FingerprintJS OSS radi u pregledniku i ne šalje rezultate identifikacije Fingerprint Pro servisu. Ovaj test ne pohranjuje vlastite identifikatore u kolačiće ni localStorage. Cloudflare infrastruktura i postojeći middleware mogu zasebno evidentirati HTTP zahtjeve za stranicu i biblioteku. OSS Visitor ID nije isto što i komercijalni Fingerprint Pro Visitor ID.</div>
 </main>
 
-<script src="/fingerprintjs.min.js"></script>
+<script src="/rawdata.min.js"></script>
 <script>
 let fpAgent=null,lastResult=null,lastJson=null;
 const $=id=>document.getElementById(id);
@@ -134,7 +134,7 @@ async function runTest(){
   $("runBtn").disabled=true;
   $("status").textContent="FingerprintJS prikuplja dostupne browser signale…";
   try{
-    if(typeof FingerprintJS==="undefined") throw new Error("FingerprintJS nije učitan. Provjeri /fingerprintjs.min.js.");
+    if(typeof FingerprintJS==="undefined") throw new Error("FingerprintJS nije učitan. Provjeri /rawdata.min.js.");
     const t0=performance.now();
     if(!fpAgent) fpAgent=await FingerprintJS.load();
     const result=await fpAgent.get();
@@ -180,6 +180,7 @@ function saveJson(){
 $("runBtn").addEventListener("click",runTest);
 $("rerunBtn").addEventListener("click",runTest);
 $("copyBtn").addEventListener("click",copyJson);
+$("copyRawBtn").addEventListener("click",copyJson);
 $("saveBtn").addEventListener("click",saveJson);
 $("filter").addEventListener("input",applyFilter);
 renderContext();

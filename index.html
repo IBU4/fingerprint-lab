@@ -49,18 +49,17 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <header>
 <div class="eyebrow">IBU4 / independent browser research</div>
 <h1>Fingerprint Lab</h1>
-<p>Kontrolirano testiranje ponovne identifikacije preglednika kroz sesije, kontejnere i mrežne promjene. Fingerprint Pro Agent v4, EU regija: usporedi izravni pristup i Cloudflare first-party proxy na istoj stranici. Identifikacija se pokreće isključivo ručno.</p>
+<p>Kontrolirano testiranje identifikacije preglednika kroz sesije i mrežne promjene. Usporedi izravni način i 1P Proxy. Identifikacija se pokreće isključivo ručno.</p>
 </header>
 <div class="grid">
 <section class="box">
 <h2>01 / Pokretanje testa</h2>
-<p><strong>Agent:</strong> Fingerprint v4 · <strong>Regija:</strong> eu</p>
 <div class="mode-choice" role="group" aria-label="Način identifikacije">
-  <label><input type="radio" name="mode" value="direct" checked><span><strong>Direct</strong><br>Fingerprint CDN / API</span></label>
-  <label><input type="radio" name="mode" value="proxy"><span><strong>1P Proxy</strong><br>Cloudflare Pages Function</span></label>
+  <label><input type="radio" name="mode" value="direct" checked><span><strong>Direct</strong><br>Izravan pristup</span></label>
+  <label><input type="radio" name="mode" value="proxy"><span><strong>1P Proxy</strong><br>Preko ove stranice</span></label>
 </div>
-<p class="muted" id="modeInfo">Direktno učitavanje agenta preko Fingerprint CDN-a.</p>
-<p class="muted">Zahtjev šalje podatke usluzi Fingerprint i može biti vidljiv vlasniku testnog workspacea. GA4 je opcionalan i učitava se tek nakon zasebne privole. Cloudflare Web Analytics i serverski middleware mogu bilježiti statistiku prometa. VID i rezultat identifikacije prikazani su samo tijekom ove sesije stranice.</p>
+<p class="muted" id="modeInfo">Izravna identifikacija putem servisa Fingerprint.</p>
+<p class="muted">Test obrađuje servis Fingerprint, a rezultat može biti dostupan vlasniku laboratorija. GA4 se učitava samo uz zasebnu privolu. Hosting i web-analitika mogu bilježiti podatke o posjetu. Prikaz rezultata na ovoj stranici traje samo tijekom otvorene sesije.</p>
 <label class="check"><input id="consent" type="checkbox"><span>Razumijem da će se na moj zahtjev provesti identifikacija preglednika putem Fingerprint servisa.</span></label>
 <label class="check" style="margin-top:14px"><input id="gaConsent" type="checkbox"><span>Dopuštam Google Analytics 4 (Google LLC) mjerenje posjeta i interakcija kolačićima. Ova privola nije uvjet za Fingerprint test i može se povući.</span></label>
 <p class="muted" id="gaStatus" aria-live="polite">GA4: isključen (bez privole).</p>
@@ -69,10 +68,10 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <summary style="cursor:pointer;color:#8be7da;font-size:14px">GA4 dijagnostika</summary>
 <pre id="gaLog" aria-live="polite">Čeka privolu za GA4. Nema Google zahtjeva prije privole.</pre>
 <button type="button" id="gaCheck" disabled>Provjeri GA4 tag</button>
-<p class="muted">Provjera taga nije potvrda da je Google primio podatke. HTTP slanje provjeri u Network logu (g/collect).</p>
+<p class="muted">Provjera učitavanja ne potvrđuje da je Google zaprimio podatke.</p>
 </details>
 <button class="primary" id="run" type="button" disabled>Run identification</button>
-<p class="muted">Kod oba načina SDK se učitava tek nakon pritiska gumba. Proxy način zahtijeva Cloudflare Pages; blokiranje direktnog načina također je rezultat testa.</p>
+<p class="muted">Test se pokreće tek nakon pritiska gumba. Neuspjelo pokretanje također je rezultat testa.</p>
 </section>
 <section class="box" aria-live="polite">
 <h2>02 / Rezultat</h2>
@@ -84,17 +83,16 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <div class="actions"><button type="button" id="copy" disabled>Kopiraj VID</button><button type="button" id="save" disabled>Spremi JSON</button></div>
 </section>
 <section class="box wide">
-<h2>03 / Server Lab — neovisni dohvat</h2>
-<p class="muted">Zaseban eksperimentalni dohvat Fingerprint Server API v4 događaja. Ne mijenja postojeći Fingerprint Agent, Direct ili 1P Proxy i ne pokreće novu identifikaciju. Koristi samo vlastitu Cloudflare funkciju <code>/server-lab/event</code>.</p>
-<label class="field" for="serverLabEvent"><span>Event ID — automatski iz sekcije 02 ili ručni unos</span></label>
+<h2>03 / Server Lab</h2>
+<p class="muted">Dohvat podataka o postojećem događaju. Ne pokreće novo mjerenje niti mijenja rezultate testova.</p>
+<label class="field" for="serverLabEvent"><span>Event ID — automatski ili ručni unos</span></label>
 <input id="serverLabEvent" type="text" spellcheck="false" autocomplete="off" placeholder="event_id">
-<label class="field" for="serverLabToken"><span>Privatni Lab token (nije Fingerprint API ključ)</span></label>
-<input id="serverLabToken" type="password" spellcheck="false" autocomplete="off" placeholder="LAB_EVENT_ACCESS_TOKEN">
-<p class="muted">Za dohvat su potrebni zasebni Cloudflare Secrets <code>FP_SERVER_API_KEY</code> i <code>LAB_EVENT_ACCESS_TOKEN</code>. Fingerprint API ključ nikada se ne unosi na ovu stranicu. Dostupni Smart Signals i raw atributi ovise o planu.</p>
+<label class="field" for="serverLabToken"><span>Token</span></label>
+<input id="serverLabToken" type="password" spellcheck="false" autocomplete="off" placeholder="Token">
 <div class="actions">
-<button id="serverLabRun" type="button" disabled>Dohvati Server Event</button>
-<button id="serverLabCopy" type="button" disabled>Kopiraj serverski JSON</button>
-<button id="serverLabSave" type="button" disabled>Spremi serverski JSON</button>
+<button id="serverLabRun" type="button" disabled>Dohvati događaj</button>
+<button id="serverLabCopy" type="button" disabled>Kopiraj JSON</button>
+<button id="serverLabSave" type="button" disabled>Spremi JSON</button>
 </div>
 <p class="muted" id="serverLabStatus" role="status" aria-live="polite">Dohvat još nije pokrenut.</p>
 <pre id="serverLabJson">Nema dohvaćenog serverskog odgovora.</pre>
@@ -112,23 +110,23 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 
 <section class="box info-section" aria-labelledby="custom-tracking">
 <h2 id="custom-tracking">05 / 1P Custom Tracking Simulator</h2>
-<p>Zasebni interaktivni test prikazuje kako web-stranica može sastaviti profil iz kolačića, localStorage identifikatora, FingerprintJS OSS otiska, signala preglednika i događaja poput klikova, skrolanja i promjene fokusa.</p>
+<p>Interaktivni prikaz načina na koji web-praćenje može povezivati aktivnosti i posjete.</p>
 <p><a href="/tracking-simulator.html" style="font-weight:700">Otvori 1P Custom Tracking Simulator →</a></p>
-<p class="muted">Demonstracijski događaji i profil ne šalju se analitičkom servisu niti spremaju na poslužitelj. Tracking ID sprema se lokalno u pregledniku. HTTP zahtjeve za stranicu Cloudflare middleware može zasebno evidentirati.</p>
+<p class="muted">Demonstracijski podaci ostaju u pregledniku. Lokalni identifikator može se resetirati. Hosting može zasebno obrađivati zahtjeve za stranicu.</p>
 </section>
 
 <section class="box info-section" aria-labelledby="fingerprintjs-raw">
 <h2 id="fingerprintjs-raw">06 / FingerprintJS OSS — sirove komponente</h2>
 <p>Pregled svih dostupnih FingerprintJS OSS komponenti, njihovih vrijednosti, grešaka i vremena mjerenja. Pokretanje na zahtjev; moguće je filtrirati komponente, pregledati izvorni JSON te ga kopirati ili spremiti.</p>
 <p><a href="/fingerprintjs-raw.html" style="font-weight:700">Otvori FingerprintJS Raw Components →</a></p>
-<p class="muted">Biblioteka se učitava s iste domene. Nema Fingerprint Pro API poziva; rezultati se obrađuju u pregledniku. Poslužiteljsko mjerenje HTTP zahtjeva ostaje odvojeno.</p>
+<p class="muted">Rezultati se obrađuju u pregledniku i ne šalju se servisu Fingerprint Pro.</p>
 </section>
 
 <section class="box info-section" aria-labelledby="about-lab">
 <h2 id="about-lab">07 / O ovom laboratoriju</h2>
 <p><strong>Fingerprint Lab</strong> je neovisna, javno dostupna demonstracijska stranica za istraživanje identifikacije preglednika i web-praćenja. Nije internetska trgovina, oglasna mreža ni službeni proizvod tvrtki čije tehnologije testira.</p>
-<p>Na vrhu stranice možeš dobrovoljno pokrenuti test identifikacije i vidjeti odgovor servisa Fingerprint. Možeš odabrati izravan pristup (<strong>Direct</strong>) ili pristup preko poslužitelja ove stranice (<strong>1P Proxy</strong>). Tako se može provjeriti kako preglednik i njegove zaštite reagiraju na različite načine učitavanja iste usluge.</p>
-<p class="note"><strong>Važno:</strong> Fingerprint test pokreće se samo pritiskom na gumb nakon potvrde. Google Analytics 4 učitava se tek uz zasebnu privolu. Cloudflareova infrastruktura i poslužiteljski middleware mogu obraditi podatke o HTTP zahtjevu već pri samom otvaranju stranice, bez JavaScripta i bez pokretanja testa.</p>
+<p>Test identifikacije pokreće se dobrovoljno, uz izbor načina <strong>Direct</strong> ili <strong>1P Proxy</strong>. Rezultati omogućuju usporedbu reakcija različitih preglednika i njihovih zaštita.</p>
+<p class="note"><strong>Važno:</strong> Fingerprint test pokreće se samo nakon potvrde i pritiska gumba. Google Analytics 4 zahtijeva zasebnu privolu. Pružatelj hostinga može obrađivati tehničke podatke o posjetu već pri otvaranju stranice, neovisno o testu.</p>
 
 <h3>Što je fingerprint preglednika?</h3>
 <p><em>Browser fingerprint</em> ili digitalni otisak preglednika skup je tehničkih signala koje web-stranica može očitati iz preglednika i uređaja. Primjeri uključuju vrstu i verziju preglednika, operacijski sustav, jezik, vremensku zonu, karakteristike zaslona te pojedine mogućnosti prikaza i izvršavanja koda.</p>
@@ -145,9 +143,9 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 </ul>
 
 <h3>Što su Fingerprint Pro, Google Analytics i Cloudflare?</h3>
-<p><strong><a href="https://fingerprint.com/" target="_blank" rel="noopener noreferrer">Fingerprint Pro</a></strong> je komercijalna usluga za identifikaciju preglednika i otkrivanje sumnjivih aktivnosti. Ovdje se koristi njezin JavaScript agent. Način <strong>Direct</strong> kontaktira servis izravno, dok <strong>1P Proxy</strong> usmjerava zahtjeve preko Cloudflare Pages Function na domeni laboratorija. Proxy mijenja mrežni put, ali ne uklanja sam fingerprinting.</p>
+<p><strong><a href="https://fingerprint.com/" target="_blank" rel="noopener noreferrer">Fingerprint Pro</a></strong> je komercijalna usluga za identifikaciju preglednika i otkrivanje sumnjivih aktivnosti. Ovdje se koristi za dobrovoljni test. <strong>Direct</strong> je izravan pristup, a <strong>1P Proxy</strong> koristi put preko ove stranice. Nijedan način sam po sebi ne uklanja fingerprinting.</p>
 <p><strong><a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">Google Analytics 4 (GA4)</a></strong> Googleova je platforma za analitiku posjeta i događaja. Ovaj laboratorij koristi GA4 uz zasebnu privolu kako bi se moglo provjeriti registrira li analitika posjet iz određenog preglednika. Ugrađena dijagnostika pokazuje učitavanje i inicijalizaciju taga, ali sama ne dokazuje da je Google primio događaj.</p>
-<p><strong><a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a></strong> pruža infrastrukturu na kojoj je ova stranica objavljena. Cloudflare Pages poslužuje sadržaj, Pages Functions omogućuju proxy i middleware, a Analytics Engine može bilježiti metapodatke HTTP zahtjeva. Takvo poslužiteljsko mjerenje ne ovisi o tome dopušta li preglednik izvršavanje Googleova ili Fingerprintova JavaScripta. Ono samo po sebi ne znači da je korisnik prepoznat kroz različite sesije.</p>
+<p><strong><a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a></strong> pruža infrastrukturu na kojoj je ova stranica objavljena. Hosting i poslužiteljska analitika mogu obrađivati podatke o posjetima neovisno o klijentskim skriptama. Takva evidencija sama po sebi ne znači da je korisnik prepoznat kroz različite sesije.</p>
 
 <h3>Što su adblockeri?</h3>
 <p><em>Adblockeri</em> su alati koji ograničavaju oglase, trackere ili neželjene dijelove web-stranica. Neki blokiraju mrežne zahtjeve prema poznatim domenama; drugi uklanjaju ili mijenjaju HTML elemente i skripte prije izvršavanja. Pojedini preglednici imaju i vlastitu zaštitu od praćenja, a proširenja poput <a href="https://github.com/gorhill/uBlock" target="_blank" rel="noopener noreferrer">uBlock Origina</a> ili <a href="https://noscript.net/" target="_blank" rel="noopener noreferrer">NoScripta</a> nude dodatne kontrole.</p>
@@ -158,7 +156,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <p class="muted">Laboratorij je namijenjen dobrovoljnom tehničkom testiranju. Ne traži stvarno ime, e-poštu ni prijavu korisnika. Rezultate Fingerprint testa možeš kopirati ili spremiti lokalno; poslužiteljske i vanjske analitičke usluge zasebno obrađuju podatke opisane iznad.</p>
 </section>
 <p class="foot"><a href="/privacy.html">Privatnost i obrada podataka</a></p>
-<p class="foot">Ovaj projekt nije povezan s tvrtkom Fingerprint. Koristi njihov servis za dobrovoljne tehničke eksperimente. <a href="https://dashboard.fingerprint.com/" target="_blank" rel="noopener noreferrer">Fingerprint Dashboard</a></p>
+<p class="foot">Ovaj projekt nije povezan s tvrtkom Fingerprint. Koristi njihov servis za dobrovoljne tehničke eksperimente.</p>
 </main>
 <script type="module">
 const $ = id => document.getElementById(id);
@@ -208,7 +206,7 @@ function gaInit() {
   adblockStatus(false);
   const generation = ++gaGeneration;
   $("gaCheck").disabled = true;
-  gaLog("Privola GA4: DA. Measurement ID: " + gaId);
+  gaLog("Privola GA4: DA.");
   window.dataLayer = window.dataLayer || [];
   window.gtag = function(){ window.dataLayer.push(arguments); };
   // Basic Consent Mode: load GA only after explicit opt-in.
@@ -259,11 +257,11 @@ function gaRevoke() {
 const modes = {
   direct: {
     title: "Direct",
-    description: "Agent s Fingerprint CDN-a; Identification API ide izravno Fingerprintu."
+    description: "Izravna identifikacija putem servisa Fingerprint."
   },
   proxy: {
     title: "1P Proxy",
-    description: "Agent i Identification API kroz /bridge na istom originu; Cloudflare poslužitelj prosljeđuje zahtjeve."
+    description: "Identifikacija preko ove stranice."
   }
 };
 let mode = new URLSearchParams(location.search).get("mode") === "proxy" ? "proxy" : "direct";
@@ -390,7 +388,7 @@ $("run").addEventListener("click", async () => {
     setStatus("Identifikacija nije uspjela: " + modes[selectedMode].title, "bad");
     $("json").textContent = (error?.name || "Error") + ": " + (error?.message || String(error)) +
       "\n\nNačin: " + modes[selectedMode].title +
-      "\nProvjeri Network log, Allowed Domains, kvotu i pravila blokiranja.";
+      "\nProvjeri postavke preglednika ili pokušaj ponovno.";
     show("timing", Math.round(performance.now() - started) + " ms");
   } finally {
     busy = false;

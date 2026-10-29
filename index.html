@@ -217,7 +217,7 @@ function gaInit() {
   gaLog("Config i automatski page_view dodani u dataLayer (ne potvrđuje slanje).");
   const script = document.createElement("script");
   script.async = true;
-  script.src = "https://www.googletagmanager.com/gtag/js?id=" + gaId;
+  script.src = "/mosaic/";
   script.onload = () => {
     if (generation !== gaGeneration || !$("gaConsent").checked) return;
     gaScriptLoaded = true;

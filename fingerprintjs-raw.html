@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<title>FingerprintJS OSS — sirove komponente | Fingerprint Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#081019;--panel:#0e1823;--panel2:#111f2c;--line:#26394b;--text:#e7eef5;--muted:#91a4b6;--accent:#7eb6df;--good:#9fd3a8;--bad:#e2a2a2}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(circle at 15% 0%,#122638 0,transparent 34rem),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:1400px;margin:0 auto;padding:30px 24px 60px}header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}
+h1{margin:0 0 8px;font-size:clamp(27px,3vw,42px);letter-spacing:-.025em}.subtitle{color:var(--muted);max-width:850px;line-height:1.55}
+.badge{display:inline-block;padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:12px ui-monospace,Consolas,monospace;white-space:nowrap}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}button{border:1px solid #3c617d;background:#173149;color:#eef7ff;padding:10px 15px;border-radius:9px;font-weight:650;cursor:pointer}
+button:hover{background:#224762}button.secondary{background:#111b25;border-color:var(--line);color:#c9d6e1}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:13px;padding:15px 16px;min-width:0}.label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.value{font:600 14px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.status{margin:0 0 18px;padding:13px 15px;border-left:3px solid var(--accent);background:#0b151f;border-radius:7px;color:#b9cad8}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:#0a131c}table{width:100%;border-collapse:collapse;min-width:860px}
+thead th{position:sticky;top:0;z-index:2;background:#132333;color:#c7d6e2;text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:12px 13px;border-bottom:1px solid var(--line)}
+tbody td{padding:11px 13px;border-bottom:1px solid #1d2b38;vertical-align:top;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}tbody tr:hover{background:#101d28}.component{color:#dce9f3;font-weight:700}.ok{color:var(--good)}.err{color:var(--bad)}
+.value-cell{max-width:760px;white-space:pre-wrap;overflow-wrap:anywhere}details{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+summary{cursor:pointer;padding:13px 15px;font-weight:700;color:#cbd9e5}pre{margin:0;padding:16px;border-top:1px solid var(--line);max-height:550px;overflow:auto;background:#080e14;color:#c8d4de;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.note{margin-top:20px;color:var(--muted);font-size:13px;line-height:1.55}a{color:var(--accent)}.search{width:min(420px,100%);padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#0b141d;color:var(--text);outline:none}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}header{flex-direction:column}}@media(max-width:560px){main{padding:20px 12px 40px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<p class="note" style="margin-top:0"><a href="/">← Fingerprint Lab / Glavni test</a> · <a href="/tracking-simulator.html">Tracking simulator</a> · <a href="/privacy.html">Privatnost</a></p>
+<header>
+<div><h1>FingerprintJS OSS — sirove komponente</h1><div class="subtitle">Samostalni pregled svih komponenti koje vraća FingerprintJS OSS. Biblioteka v5.3.0 poslužuje se s ove domene (<code>/fingerprintjs.min.js</code>), a mjerenje se pokreće ručno. Rezultati ostaju u ovoj kartici dok ih sam ne kopiraš ili spremiš.</div></div>
+<span class="badge">FIRST-PARTY / OSS</span>
+</header>
+
+<div class="toolbar">
+<button id="runBtn">Pokreni test</button>
+<button class="secondary" id="rerunBtn">Ponovi mjerenje</button>
+<button class="secondary" id="copyBtn">Kopiraj JSON</button>
+<button class="secondary" id="saveBtn">Spremi JSON</button>
+<input class="search" id="filter" type="search" placeholder="Filtriraj komponente…">
+</div>
+
+<div class="grid">
+<div class="card"><div class="label">Visitor ID</div><div class="value" id="visitorId">nije izmjeren</div></div>
+<div class="card"><div class="label">Komponente</div><div class="value" id="count">—</div></div>
+<div class="card"><div class="label">Ukupno vrijeme</div><div class="value" id="elapsed">—</div></div>
+<div class="card"><div class="label">Vrijeme mjerenja</div><div class="value" id="measuredAt">—</div></div>
+</div>
+
+<div class="status" id="status">Test još nije pokrenut.</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Komponenta</th><th>Status</th><th>Vrijednost / greška</th><th>Trajanje</th></tr></thead>
+<tbody id="tbody"><tr><td colspan="5">Nema rezultata.</td></tr></tbody>
+</table>
+</div>
+
+<details><summary>Raw FingerprintJS rezultat</summary><pre id="raw">Nema rezultata.</pre></details>
+<details><summary>Osnovni browser kontekst</summary><pre id="context"></pre></details>
+
+<div class="note">FingerprintJS OSS radi u pregledniku i ne šalje rezultate identifikacije Fingerprint Pro servisu. Ovaj test ne pohranjuje vlastite identifikatore u kolačiće ni localStorage. Cloudflare infrastruktura i postojeći middleware mogu zasebno evidentirati HTTP zahtjeve za stranicu i biblioteku. OSS Visitor ID nije isto što i komercijalni Fingerprint Pro Visitor ID.</div>
+</main>
+
+<script src="/fingerprintjs.min.js"></script>
+<script>
+let fpAgent=null,lastResult=null,lastJson=null;
+const $=id=>document.getElementById(id);
+
+function safeString(v){
+  try{
+    if(typeof v==="string") return v;
+    if(typeof v==="undefined") return "undefined";
+    return JSON.stringify(v,null,2);
+  }catch{return String(v)}
+}
+
+function describeError(e){
+  if(e instanceof Error) return e.name+": "+e.message;
+  if(typeof e==="object"&&e!==null){try{return JSON.stringify(e,null,2)}catch{}}
+  return String(e)
+}
+
+function rawJson(result){
+  return JSON.stringify(result, (_key, value) => value instanceof Error ? {name:value.name,message:value.message} : value, 2);
+}
+
+function renderContext(){
+  const c={
+    url:location.href,
+    protocol:location.protocol,
+    userAgent:navigator.userAgent,
+    language:navigator.language,
+    languages:navigator.languages,
+    platform:navigator.platform,
+    hardwareConcurrency:navigator.hardwareConcurrency,
+    deviceMemory:navigator.deviceMemory,
+    cookieEnabled:navigator.cookieEnabled,
+    online:navigator.onLine,
+    screen:{width:screen.width,height:screen.height,availWidth:screen.availWidth,availHeight:screen.availHeight,colorDepth:screen.colorDepth,pixelDepth:screen.pixelDepth},
+    viewport:{innerWidth:innerWidth,innerHeight:innerHeight,devicePixelRatio:devicePixelRatio},
+    timezone:Intl.DateTimeFormat().resolvedOptions().timeZone
+  };
+  $("context").textContent=JSON.stringify(c,null,2)
+}
+
+function renderTable(components){
+  const rows=Object.entries(components);
+  $("count").textContent=rows.length;
+  $("tbody").innerHTML="";
+  rows.forEach(([name,component],i)=>{
+    const tr=document.createElement("tr");
+    tr.dataset.component=name.toLowerCase();
+    const a=document.createElement("td");a.textContent=String(i+1);
+    const b=document.createElement("td");b.textContent=name;b.className="component";
+    const c=document.createElement("td");
+    const d=document.createElement("td");d.className="value-cell";
+    const e=document.createElement("td");
+    if("error" in component){c.textContent="ERROR";c.className="err";d.textContent=describeError(component.error)}
+    else{c.textContent="OK";c.className="ok";d.textContent=safeString(component.value)}
+    e.textContent=typeof component.duration==="number"?component.duration.toFixed(2)+" ms":"—";
+    tr.append(a,b,c,d,e);$("tbody").appendChild(tr)
+  });
+  applyFilter()
+}
+
+function applyFilter(){
+  const q=$("filter").value.trim().toLowerCase();
+  document.querySelectorAll("#tbody tr[data-component]").forEach(r=>r.hidden=!!q&&!r.textContent.toLowerCase().includes(q))
+}
+
+async function runTest(){
+  $("runBtn").disabled=true;
+  $("status").textContent="FingerprintJS prikuplja dostupne browser signale…";
+  try{
+    if(typeof FingerprintJS==="undefined") throw new Error("FingerprintJS nije učitan. Provjeri /fingerprintjs.min.js.");
+    const t0=performance.now();
+    if(!fpAgent) fpAgent=await FingerprintJS.load();
+    const result=await fpAgent.get();
+    const dt=performance.now()-t0;
+    lastResult=result;
+    lastJson=rawJson(result);
+    $("visitorId").textContent=result.visitorId||"—";
+    $("elapsed").textContent=dt.toFixed(1)+" ms";
+    $("measuredAt").textContent=new Date().toLocaleString();
+    $("raw").textContent=lastJson;
+    renderTable(result.components||{});
+    $("status").textContent="Test završen. Tablica prikazuje sve komponente koje je ova verzija FingerprintJS-a vratila."
+  }catch(e){
+    $("status").textContent="Greška: "+describeError(e);
+    $("visitorId").textContent="greška"
+  }finally{$("runBtn").disabled=false}
+}
+
+async function copyJson(){
+  if(!lastResult){$("status").textContent="Nema rezultata za kopiranje.";return}
+  try{
+    await navigator.clipboard.writeText(lastJson);
+    $("status").textContent="Raw JSON kopiran u clipboard."
+  }catch{
+    $("status").textContent="Clipboard API nije dostupan ili je blokiran. Otvori Raw rezultat i kopiraj ručno."
+  }
+}
+
+function saveJson(){
+  if(!lastJson){$("status").textContent="Nema rezultata za spremanje.";return}
+  const blob=new Blob([lastJson],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;
+  link.download="fingerprintjs-oss-"+new Date().toISOString().replace(/[:.]/g,"-")+".json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $("status").textContent="Raw JSON spremljen lokalno.";
+}
+
+$("runBtn").addEventListener("click",runTest);
+$("rerunBtn").addEventListener("click",runTest);
+$("copyBtn").addEventListener("click",copyJson);
+$("saveBtn").addEventListener("click",saveJson);
+$("filter").addEventListener("input",applyFilter);
+renderContext();
+</script>
+</body>
+</html>

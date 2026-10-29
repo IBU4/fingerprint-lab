@@ -1,14 +1,12 @@
 # Fingerprint Lab
 
-**[Open Fingerprint Lab](https://fingerprint-lab.pages.dev/)**
-
 Independent browser fingerprinting and tracking research laboratory. Not affiliated with Fingerprint.
 
 ## Tests
 
-- **[Fingerprint Pro test](https://fingerprint-lab.pages.dev/)** — compare Direct and first-party proxy identification, inspect visitor IDs and export results. Includes optional Google Analytics 4 diagnostics and adblocking detection.
-- **[1P Custom Tracking Simulator](https://fingerprint-lab.pages.dev/tracking-simulator.html)** — test first-party identification with FingerprintJS OSS, local tracking IDs and behavioral events.
-- **[Privacy and data processing](https://fingerprint-lab.pages.dev/privacy.html)** — information about data processing, local storage and third-party services.
+- **Fingerprint Pro test** — compare Direct and first-party proxy identification, inspect visitor IDs and export results. Includes optional Google Analytics 4 diagnostics and adblocking detection.
+- **1P Custom Tracking Simulator** — test first-party identification with FingerprintJS OSS, local tracking IDs and behavioral events.
+- **Privacy and data processing** — information about data processing, local storage and third-party services.
 
 ## How it works
 

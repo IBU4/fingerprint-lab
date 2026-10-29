@@ -24,10 +24,10 @@ button:disabled{opacity:.46;cursor:not-allowed}.primary{background:#78e4d4;borde
 .field{margin:17px 0}.field span{display:block;font-size:13px;color:#9fb5c9;margin-bottom:6px}
 .field strong{font:600 15px ui-monospace,Consolas,monospace;color:#dfeafa;overflow-wrap:anywhere}
 #visitor{color:#80ead5;font-size:18px}
-input[type=text],input[type=password]{width:100%;background:#0c1724;border:1px solid #506579;border-radius:9px;padding:12px;color:white;font:15px ui-monospace,monospace}
+input[type=text]{width:100%;background:#0c1724;border:1px solid #506579;border-radius:9px;padding:12px;color:white;font:15px ui-monospace,monospace}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto;background:#0a1420;border:1px solid #31445a;border-radius:10px;padding:15px;font-size:12px;line-height:1.55;color:#c7dcec}
-.foot{margin-top:30px;line-height:1.7}
+#compare{color:#bcd2e6;padding-top:12px}.foot{margin-top:30px;line-height:1.7}
 .mode-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
 .mode-choice label{display:flex;align-items:center;gap:9px;padding:12px;border:1px solid #547486;border-radius:10px;background:#0d1c2a;cursor:pointer;font-size:14px;line-height:1.4}
 .mode-choice label:has(input:checked){border-color:#78e4d4;background:#1e3e46}
@@ -84,20 +84,11 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <div class="actions"><button type="button" id="copy" disabled>Kopiraj VID</button><button type="button" id="save" disabled>Spremi JSON</button></div>
 </section>
 <section class="box wide">
-<h2>03 / Fingerprint Pro — Server Event</h2>
-<p class="muted">Dohvati puni serverski rezultat za određeni Event ID (EU / API v4). Preuzima se samo na zahtjev, bez novog fingerprint mjerenja. Dostupni atributi i Smart Signals ovise o Fingerprint planu.</p>
-<label class="field" for="serverEventId"><span>Event ID (automatski iz zadnjeg testa ili ručni unos)</span></label>
-<input id="serverEventId" type="text" spellcheck="false" autocomplete="off" placeholder="event_id">
-<label class="field" for="eventAccess"><span>Privatni pristupni token laboratorija (nije Fingerprint Secret API Key)</span></label>
-<input id="eventAccess" type="password" spellcheck="false" autocomplete="off" placeholder="Lab access token">
-<p class="muted">Server API ključ čuva se isključivo u Cloudflare Pages Secretu. Pristupni token ne pohranjuje se u preglednik i služi samo za autorizaciju ovog čitanja.</p>
-<div class="actions">
-  <button type="button" id="getServerEvent" disabled>Dohvati Server Event</button>
-  <button type="button" id="copyServerEvent" disabled>Kopiraj serverski JSON</button>
-  <button type="button" id="saveServerEvent" disabled>Spremi serverski JSON</button>
-</div>
-<p class="muted" id="serverEventStatus" role="status" aria-live="polite">Nije izvršen serverski dohvat.</p>
-<pre id="serverEventJson">Server Event JSON pojavit će se ovdje nakon autoriziranog poziva.</pre>
+<h2>03 / Usporedba VID-a</h2>
+<p class="muted">Zalijepi VID iz prethodne sesije ili drugog načina testa. Polje se ne sprema na server ni u localStorage.</p>
+<input id="reference" type="text" spellcheck="false" autocomplete="off" placeholder="Prethodni visitor_id">
+<div id="compare">Nema podataka za usporedbu.</div>
+<p class="muted" id="history">Nema mjerenja u trenutačnoj stranici.</p>
 <h2>04 / Izvorni odgovor agenta</h2>
 <pre id="json">Pokreni identifikaciju za prikaz JSON odgovora.</pre>
 </section>
@@ -263,16 +254,7 @@ let mode = new URLSearchParams(location.search).get("mode") === "proxy" ? "proxy
 let busy = false;
 const agents = { direct: null, proxy: null };
 const latest = { direct: null, proxy: null };
-let serverEventBusy = false;
-let serverEventResult = null;
-function serverReady() {
-  $("getServerEvent").disabled = serverEventBusy || !$("serverEventId").value.trim() || !$("eventAccess").value;
-}
-function clearServerResult() {
-  serverEventResult = null;
-  $("copyServerEvent").disabled = true;
-  $("saveServerEvent").disabled = true;
-}
+const historyItems = [];
 
 function setStatus(message, type = "") {
   $("status").textContent = message;
@@ -293,6 +275,13 @@ function ready() {
     r.disabled = busy;
   });
 }
+function compare() {
+  const ref = $("reference").value.trim();
+  const vid = latest[mode]?.vid || "";
+  $("compare").textContent = !ref || !vid
+    ? "Potreban je trenutačni i referentni VID."
+    : ref === vid ? "PODUDARANJE: isti visitor_id." : "RAZLIČITO: različiti visitor_id.";
+}
 function showResult() {
   const record = latest[mode];
   if (!record) {
@@ -311,6 +300,7 @@ function showResult() {
     $("save").disabled = false;
     setStatus("Zadnji rezultat: " + modes[mode].title, "good");
   }
+  compare();
 }
 function chooseMode(nextMode) {
   if (busy || !modes[nextMode]) return;
@@ -352,64 +342,7 @@ document.querySelectorAll('input[name="mode"]').forEach(r => {
     if (r.checked) chooseMode(r.value);
   });
 });
-$("serverEventId").addEventListener("input", () => {
-  clearServerResult();
-  $("serverEventStatus").textContent = "Spremno za dohvat odabranog Event ID-ja.";
-  $("serverEventJson").textContent = "Pritisni Dohvati Server Event.";
-  serverReady();
-});
-$("eventAccess").addEventListener("input", serverReady);
-$("getServerEvent").addEventListener("click", async () => {
-  if (serverEventBusy || !$("serverEventId").value.trim() || !$("eventAccess").value) return;
-  serverEventBusy = true;
-  clearServerResult();
-  serverReady();
-  $("serverEventStatus").textContent = "Dohvaćanje događaja putem Cloudflare poslužitelja…";
-  $("serverEventJson").textContent = "Čitanje Server API-ja…";
-  try {
-    const response = await fetch("/api/event", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-lab-event-token": $("eventAccess").value
-      },
-      body: JSON.stringify({ eventId: $("serverEventId").value.trim() }),
-      cache: "no-store",
-      credentials: "omit",
-      referrerPolicy: "no-referrer"
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error((result?.error || "Server API error") +
-        " (HTTP " + response.status +
-        (result?.upstreamStatus ? ", Fingerprint " + result.upstreamStatus : "") + ")");
-    }
-    serverEventResult = result;
-    $("serverEventJson").textContent = JSON.stringify(result, null, 2);
-    $("serverEventStatus").textContent = "Server Event dohvaćen. Polja koja plan ne vraća ostaju odsutna.";
-    $("copyServerEvent").disabled = false;
-    $("saveServerEvent").disabled = false;
-  } catch (error) {
-    $("serverEventJson").textContent = (error?.name || "Error") + ": " +
-      (error?.message || String(error));
-    $("serverEventStatus").textContent = "Serverski dohvat nije uspio.";
-  } finally {
-    serverEventBusy = false;
-    serverReady();
-  }
-});
-$("copyServerEvent").addEventListener("click", async () => {
-  if (serverEventResult) await navigator.clipboard.writeText(JSON.stringify(serverEventResult, null, 2));
-});
-$("saveServerEvent").addEventListener("click", () => {
-  if (!serverEventResult) return;
-  const url = URL.createObjectURL(new Blob([JSON.stringify(serverEventResult, null, 2)], {type:"application/json"}));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "fingerprint-server-event-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-});
+$("reference").addEventListener("input", compare);
 $("run").addEventListener("click", async () => {
   if (busy || !$("consent").checked) return;
   busy = true;
@@ -427,13 +360,12 @@ $("run").addEventListener("click", async () => {
     const time = new Date().toLocaleString("hr-HR");
     const elapsed = Math.round(performance.now() - started);
     latest[selectedMode] = { data, vid, event, found, time, elapsed };
-    if (event) {
-      $("serverEventId").value = String(event);
-      clearServerResult();
-      $("serverEventJson").textContent = "Pritisni Dohvati Server Event za ovaj događaj.";
-      $("serverEventStatus").textContent = "Event ID zadnjeg testa je spreman.";
-      serverReady();
-    }
+    historyItems.unshift({ mode: selectedMode, time, vid: vid || "(prazan)" });
+    historyItems.splice(10);
+    $("history").textContent = historyItems.map((x, i) =>
+      (i + 1) + ". [" + modes[x.mode].title + "] " + x.time + " — " + x.vid
+    ).join("\n");
+    $("history").style.whiteSpace = "pre-wrap";
     showResult();
     setStatus("Identifikacija završena: " + modes[selectedMode].title, "good");
   } catch (error) {
@@ -464,7 +396,6 @@ $("save").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 chooseMode(mode);
-serverReady();
 </script>
 </body>
 </html>

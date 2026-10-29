@@ -6,6 +6,7 @@ Independent browser fingerprinting and tracking research laboratory. Not affilia
 
 - **Fingerprint Pro test** — compare Direct and first-party proxy identification, inspect visitor IDs and export results. Includes optional Google Analytics 4 diagnostics and adblocking detection.
 - **1P Custom Tracking Simulator** — test first-party identification with FingerprintJS OSS, local tracking IDs and behavioral events.
+- **FingerprintJS OSS Raw Components** — inspect individual browser components, errors, timing, and locally export the complete raw JSON.
 - **Privacy and data processing** — information about data processing, local storage and third-party services.
 
 ## How it works

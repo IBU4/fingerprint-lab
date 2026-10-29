@@ -51,7 +51,7 @@
     if (!validEventId(eventId) || !accessToken) return;
     running = true;
     resetServerResult();
-    $("serverLabStatus").textContent = "Dohvat samo preko /server-lab/event…";
+    $("serverLabStatus").textContent = "Dohvat u tijeku…";
     $("serverLabJson").textContent = "Čitanje Fingerprint Server API-ja…";
     updateButtons();
     try {

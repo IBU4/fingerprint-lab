@@ -230,7 +230,20 @@
   }
 
   function mpPageStatus(message) {
-    const status = el("mpPageStatus");
+    let status = el("mpPageStatus");
+    if (!status && mode === "mp" && choice === "granted") {
+      const main = document.querySelector("main");
+      if (main) {
+        status = document.createElement("p");
+        status.id = "mpPageStatus";
+        status.className = "ga4-consent-footer";
+        status.style.marginTop = "6px";
+        status.style.fontSize = "12px";
+        status.style.color = "#91a4b6";
+        status.setAttribute("role", "status");
+        main.appendChild(status);
+      }
+    }
     if (status) status.textContent = message;
   }
 
@@ -414,17 +427,6 @@
       footer.appendChild(button);
       main.appendChild(footer);
 
-      if (mode === "mp" && choice === "granted") {
-        const status = document.createElement("p");
-        status.id = "mpPageStatus";
-        status.className = "ga4-consent-footer";
-        status.style.marginTop = "6px";
-        status.style.fontSize = "12px";
-        status.style.color = "#91a4b6";
-        status.setAttribute("role", "status");
-        status.textContent = "GA4 MP: priprema page_view…";
-        main.appendChild(status);
-      }
     }
 
     const gaCheck = el("gaCheck");

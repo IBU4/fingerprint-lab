@@ -2,7 +2,14 @@
 // API secret never leaves the Cloudflare server. Explicit opt-in only.
 const STREAM = "G-F6JRRE08DC";
 const ALLOWED = new Set(["page_view", "section_view", "section_engagement", "section_interaction", "mp_test_event"]);
-const PAGES = new Set(["/", "/index.html", "/tracking-simulator.html", "/fingerprintjs-raw.html", "/beacon-test.html", "/privacy.html"]);
+// Cloudflare Pages serves HTML files using extensionless canonical paths.
+const PAGES = new Set([
+  "/", "/index", "/index.html",
+  "/tracking-simulator", "/tracking-simulator.html",
+  "/fingerprintjs-raw", "/fingerprintjs-raw.html",
+  "/beacon-test", "/beacon-test.html",
+  "/privacy", "/privacy.html"
+]);
 const SECTIONS = new Set(["identification", "results", "server_lab_and_response", "tracking_simulator", "raw_components", "documentation"]);
 const ACTIONS = new Set(["run_test", "check_ga4_tag", "copy_vid", "export_json", "fetch_event", "copy_event_json", "export_event_json", "open_simulator", "open_raw_components", "open_privacy", "open_reference", "select_direct", "select_proxy", "open_ga_diagnostics"]);
 

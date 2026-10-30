@@ -94,7 +94,7 @@ tbody tr:hover{background:#101d28}
 .pipe-box strong{display:block;margin-bottom:8px}
 .pipe-box ul{margin:0;padding-left:18px;color:#b7c7d5;line-height:1.55;font-size:13px}
 .arrow{font-size:27px;color:#5f829c;text-align:center}
-.event-table{height:280px;overflow:auto}
+.event-table{height:280px;overflow:auto;overflow-anchor:none}
 .profile-list{display:grid;gap:9px}
 .profile-row{
   display:grid;grid-template-columns:180px minmax(0,1fr);gap:10px;
@@ -461,7 +461,15 @@ pre{
       td.textContent = text;
       tr.appendChild(td);
     });
+    // Keep the newest event at the top, or preserve the reader's position
+    // when reviewing older events. Avoid mobile scroll anchoring jumps.
+    const scroller = document.querySelector(".event-table");
+    const oldTop = scroller.scrollTop;
+    const oldHeight = scroller.scrollHeight;
     $("eventBody").prepend(tr);
+    if (oldTop > 0) {
+      scroller.scrollTop = oldTop + scroller.scrollHeight - oldHeight;
+    }
 
     updateRaw();
   }

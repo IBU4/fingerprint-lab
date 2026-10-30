@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<title>Beacon API test — Fingerprint Lab</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#0c1420;color:#eaf1f8}
+*{box-sizing:border-box}body{margin:0;background:#0c1420}main{max-width:760px;margin:0 auto;padding:28px 18px 65px}
+h1{font-size:clamp(27px,5vw,38px)}h2{font-size:19px}p,li{line-height:1.6;color:#b9c7d7}
+a{color:#8be7da}.card{background:#152333;border:1px solid #34475b;padding:22px;border-radius:16px;margin-top:20px}
+button{border:1px solid #78e4d4;background:#78e4d4;color:#10272b;font:600 16px system-ui;padding:13px 18px;border-radius:9px;cursor:pointer}
+button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1420;border:1px solid #31445a;border-radius:10px;padding:16px;font-size:13px;line-height:1.65}
+#probeStatus{font-weight:600;color:#8be7da}
+</style>
+<script src="/delivery-probe-ui.js" defer></script>
+</head>
+<body>
+<main>
+<p><a href="/">← Fingerprint Lab</a></p>
+<h1>Provjera Beacon API-ja</h1>
+<p>Izolirani test utvrđuje stiže li <code>navigator.sendBeacon()</code> do našeg poslužitelja. Usporedno šalje kontrolni <code>fetch</code> zahtjev. Test se pokreće isključivo pritiskom gumba.</p>
+<section class="card">
+<h2>Beacon / fetch</h2>
+<button id="probeRun" type="button">Pokreni provjeru</button>
+<p id="probeStatus" role="status" aria-live="polite">Spremno.</p>
+<pre id="probeResults" aria-live="polite">Rezultati se prikazuju nakon testa.</pre>
+</section>
+<section class="card">
+<h2>Tumačenje</h2>
+<p>Ako <strong>fetch stigne</strong>, a <strong>Beacon ne stigne</strong>, postoji sumnja na blokiranje Beacon zahtjeva. Ponovi test s NoScript <code>ping</code> isključenim pa uključenim, bez drugih promjena.</p>
+<p>Povratna vrijednost <code>sendBeacon() = true</code> znači samo da je preglednik stavio zahtjev u red, ne da je poslužitelj primio podatke. Neprimitak nije sam po sebi konačan dokaz blokiranja.</p>
+<p>Ovo je <strong>first-party</strong> test. Njegov rezultat ne dokazuje što se događa sa zahtjevima prema domeni Google Analyticsa.</p>
+<p>Test šalje samo slučajne kratkotrajne oznake, ne koristi GA4, Fingerprint Pro, kolačiće ni trajnu pohranu rezultata. Privremena potvrda na Cloudflare rubnom poslužitelju istječe ubrzo nakon testa. Standardna infrastruktura hostinga i dalje obrađuje HTTP zahtjeve.</p>
+</section>
+</main>
+</body>
+</html>

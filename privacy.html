@@ -1,23 +1,41 @@
 <!doctype html>
-<html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>Privatnost — Fingerprint Lab</title>
-<style>body{background:#0c1420;color:#e4edf5;font:16px/1.65 system-ui,sans-serif;margin:0}main{max-width:800px;margin:auto;padding:28px 20px 70px}a{color:#8be7da}h1,h2{line-height:1.25}h2{margin-top:30px}p,li{max-width:76ch}.note{border-left:3px solid #8be7da;padding-left:14px;color:#c4d3de}</style></head><body><main>
-<p><a href="/">← Fingerprint Lab</a> · <a href="/tracking-simulator.html">Tracking simulator</a> · <a href="/fingerprintjs-raw.html">FingerprintJS raw data</a></p>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Privatnost — Fingerprint Lab</title>
+<style>
+body{background:#0c1420;color:#e4edf5;font:16px/1.65 system-ui,sans-serif;margin:0}
+main{max-width:800px;margin:auto;padding:28px 20px 70px}
+a{color:#8be7da}h1,h2{line-height:1.25}h2{margin-top:28px}
+p{max-width:76ch}
+</style>
+</head>
+<body>
+<main>
+<p><a href="/">← Fingerprint Lab</a></p>
 <h1>Privatnost i obrada podataka</h1>
-<p class="note">Fingerprint Lab javni je, neovisni istraživački laboratorij. Ovdje je opisano kako rade testovi, lokalna pohrana i povezane usluge.</p>
-<h2>Otvaranje stranice</h2>
-<p>Cloudflare Pages poslužuje web-stranicu i tehnički obrađuje HTTP zahtjeve. Cloudflare Analytics Engine middleware, ako je konfiguriran, bilježi putanju zahtjeva (za proxy sažetu na /bridge), HTTP metodu, status odgovora, državu, ASN, približnu kategoriju preglednika, Sec-Fetch-Mode i trajanje zahtjeva. Objavljeni middleware ne upisuje IP adresu, Visitor ID ili sadržaj zahtjeva u taj skup podataka. Cloudflare infrastruktura može zasebno obrađivati tehničke podatke o prometu. Cloudflare Web Analytics zasebno bilježi statistiku posjeta neovisno o dobrovoljnim testovima.</p>
-<h2>Fingerprint Pro — dobrovoljni test</h2>
-<p>Agent Fingerprint Pro učitava se tek nakon označavanja potvrde i pritiska gumba za pokretanje identifikacije. Način Direct šalje zahtjeve izravno servisu Fingerprint; 1P Proxy usmjerava ih preko Cloudflare Pages Function prema servisu Fingerprint (EU regija). Servis može obrađivati signale uređaja i preglednika, mrežne podatke i rezultate identifikacije prema svojim pravilima. Rezultat i povijest testa u sučelju ostaju u memoriji kartice; korisnik ih može sam kopirati ili izvesti u JSON. Obrada kod pružatelja usluge odvojena je od lokalnog prikaza.</p>
-<h2>Server Lab — zaseban dohvat postojećeg događaja</h2>
-<p>Sekcija 03 koristi neovisnu Cloudflare funkciju za ručni dohvat postojećeg Fingerprint Server API događaja. Ne učitava dodatni Fingerprint Agent niti pokreće novo mjerenje. Dohvat zahtijeva privatni pristupni token laboratorija, a Fingerprint Secret API Key čuva se kao Cloudflare Secret i nikada se ne šalje pregledniku. Pristupni token se ne sprema u kolačić ni localStorage; prosljeđuje se samo Cloudflare funkciji tijekom autoriziranog HTTPS zahtjeva. Serverski rezultat može uključivati IP adresu, mrežne podatke, identifikacijske signale i druge podatke dostupne unutar plana. JSON se prikazuje u trenutnoj kartici i može se ručno kopirati ili spremiti; laboratorij ga ne sprema u vlastitu bazu. Cloudflareova infrastruktura i postojeći middleware i dalje mogu bilježiti tehničke metapodatke HTTP zahtjeva.</p>
-<h2>Google Analytics 4 — zasebna privola</h2>
-<p>GA4 skripta učitava se tek nakon zasebne označene privole. Stranica inicijalizira GA4, omogućuje analitičku pohranu i šalje standardni page_view; oglasna pohrana i personalizacijski signali postavljeni su na denied. Povlačenje privole postavlja analitičku pohranu na denied i pokušava ukloniti lokalne GA kolačiće. Već učitanu skriptu nije moguće potpuno ukloniti bez osvježavanja stranice. Uz privolu se na početnoj stranici mogu slati događaji section_view, section_engagement i section_interaction: oznaka sekcije, približno aktivno trajanje njezine vidljivosti, odabrane radnje te, samo ako je izričito zadan URL parametar, oznaka simuliranog scenarija. To nije mjerenje čitanja ili stvarne pozornosti, nego vidljivosti dijela stranice dok je kartica aktivna. Ova analitika ne šalje Visitor ID, Event ID, pristupni token ili sadržaj rezultata i JSON-a. Događaji se ne stvaraju prije GA4 privole i prestaju se slati nakon povlačenja privole. Dijagnostika i oznaka sumnje na adblocking nisu dokaz da je događaj zaprimljen ili blokiran.</p>
-<h2>1P Custom Tracking Simulator</h2>
-<p>Simulator koristi lokalno posluženu FingerprintJS OSS biblioteku. Demonstracijski profil i događaji ostaju u memoriji kartice i ne šalju se kao analitički događaji na poslužitelj. Simulator sprema demonstracijski Tracking ID u localStorage i kolačić s trajanjem do 30 dana; tipka za resetiranje identiteta služi uklanjanju tog identiteta. Nakon ručnog pokretanja postoji i zasebna provjera uspješnosti 1P komunikacije: poslužitelj postavlja nasumični sesijski kolačić (bez roka trajanja), a Cloudflare D1 bilježi isključivo pripadni nasumični ključ pokušaja i logičku vrijednost uspjeha. Nakon uspješno dovršene provjere redak se briše iz D1 baze. Ako provjera ne završi, redak može privremeno ostati u bazi. U D1 se ne šalju Fingerprint ID, demonstracijski događaji niti sadržaj profila. Ta provjera nije dokaz da adblocker postoji ili ne postoji. HTTP zahtjevi za stranicu i datoteku biblioteke zasebno prolaze kroz Cloudflare infrastrukturu i middleware.</p>
-<h2>FingerprintJS OSS — sirove komponente</h2>
-<p>Na zasebnoj stranici može se ručno pokrenuti lokalno mjerenje FingerprintJS OSS bibliotekom koju poslužuje ova domena. Komponente, preglednikov kontekst i raw JSON prikazuju se u kartici; stranica ne šalje te rezultate Fingerprint Pro API-ju i ne sprema vlastite identifikatore u cookies ili localStorage. Korisnik ih može kopirati ili preuzeti. Cloudflare poslužuje stranicu i skriptu te može evidentirati njihove HTTP zahtjeve.</p>
-<h2>Kontakt</h2>
-<p>Za pitanja o privatnosti i obradi podataka: <a href="mailto:31tidytgv@mozmail.com">31tidytgv@mozmail.com</a>.</p>
-<h2>Vanjske usluge i daljnje informacije</h2>
-<p>Uključeni su Cloudflare (hosting, Web Analytics i Analytics Engine), Fingerprint (dobrovoljna identifikacija) i Google (GA4 samo uz zasebnu privolu). Njihove vlastite obrade, pravila privatnosti i rokovi čuvanja mogu se razlikovati od lokalnog ponašanja stranice. Laboratorij ne zahtijeva registraciju, ime ili adresu e-pošte.</p>
-<p><a href="/">Povratak na glavni test</a></p></main></body></html>
+<p>Fingerprint Lab neovisan je istraživački projekt. Testovi su dobrovoljni. Registracija nije potrebna.</p>
+
+<h2>Hosting i posjeti</h2>
+<p>Cloudflare poslužuje stranicu, obrađuje tehničke podatke o prometu i pruža statistiku posjećenosti.</p>
+
+<h2>Fingerprint testovi</h2>
+<p>Fingerprint Pro pokreće se samo na zahtjev korisnika. Servis obrađuje podatke potrebne za identifikacijski test. Rezultate možeš pregledati i spremiti. Server Lab dostupan je samo uz autorizirani pristup.</p>
+<p>FingerprintJS OSS test prikazuje rezultate lokalno u pregledniku, bez slanja tih rezultata Fingerprint Pro servisu.</p>
+
+<h2>Google Analytics 4</h2>
+<p>GA4 se uključuje samo uz zasebnu privolu. Bilježi posjete i interakcije sa sekcijama stranice, uključujući približno vrijeme zadržavanja. Ne šaljemo mu Fingerprint Visitor ID ni rezultate testova. Privolu možeš povući; za potpuno uklanjanje učitane skripte osvježi stranicu.</p>
+
+<h2>Tracking simulator</h2>
+<p>Demonstracijski događaji ostaju u pregledniku. Simulirani Tracking ID pohranjuje se u kolačić i lokalnu pohranu do 30 dana, a može se resetirati.</p>
+<p>Automatska provjera komunikacije koristi zaseban sesijski kolačić i kratkotrajni zapis u Cloudflare bazi. Zapis se briše po dovršetku provjere; prekinuti test može ostaviti zapis.</p>
+
+<h2>Vanjske usluge i kontakt</h2>
+<p>Cloudflare, Fingerprint i Google zasebno obrađuju podatke u okviru svojih usluga i pravila privatnosti.</p>
+<p>Za pitanja o privatnosti: <a href="mailto:31tidytgv@mozmail.com">31tidytgv@mozmail.com</a>.</p>
+<p><a href="/">Povratak na glavni test</a></p>
+</main>
+</body>
+</html>

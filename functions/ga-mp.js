@@ -113,7 +113,7 @@ export async function onRequestPost({ request, env }) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
-      redirect: "error"
+      redirect: "manual"
     });
   } catch {
     return json({ ok: false, error: "upstream_unreachable" }, 502);

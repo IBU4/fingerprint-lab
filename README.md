@@ -2,8 +2,6 @@
 
 Independent browser fingerprinting and tracking research laboratory.
 
-**Live laboratory:** https://fingerprint-lab.pages.dev/
-
 ## What you can explore
 
 - **Fingerprint Pro** — compare direct and first-party identification methods, examine test results, and export your own observations.

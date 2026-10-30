@@ -232,15 +232,15 @@
     if (button) button.disabled = true;
     try {
       log("GA4 MP: provjera valjanosti testnog događaja...");
-      const check = await sendMP("ga_mp_test", {}, true);
+      const check = await sendMP("mp_test_event", {}, true);
       if (check.validation?.length) {
         log("GA4 MP: validationMessages = " + JSON.stringify(check.validation).slice(0, 250));
         return;
       }
       log("GA4 MP: validation OK; slanje testa.");
-      const actual = await sendMP("ga_mp_test");
+      const actual = await sendMP("mp_test_event");
       if (actual?.accepted_by_endpoint) {
-        log("GA4 MP: testni POST prihvaćen; potvrdi događaj ga_mp_test u Realtimeu.");
+        log("GA4 MP: testni POST prihvaćen; potvrdi događaj mp_test_event u Realtimeu.");
       }
     } catch (error) {
       log("GA4 MP: " + String(error?.message || error));

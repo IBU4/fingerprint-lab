@@ -659,15 +659,35 @@ pre{
     updateSummary();
   });
 
-  addEventListener("pointermove", () => {
+  function pointerObject(x, y) {
+    const element = document.elementFromPoint(x, y);
+    if (!element) return "nepoznat element";
+    const object = element.closest(
+      "[data-demo], button, a, summary, .profile-row, .pipe-box, .fake-card, " +
+      ".section-title, h1, h2, h3, .card, .demo-zone"
+    );
+    if (!object) return element.tagName.toLowerCase();
+    if (object.dataset.demo) return "demo: " + object.dataset.demo;
+    const caption = object.matches(".profile-row") ? object.querySelector(".profile-key") :
+      object.matches(".card") ? object.querySelector(".section-title, .label") :
+      object.matches(".pipe-box") ? object.querySelector("strong") :
+      object.matches(".demo-zone") ? object.querySelector("h3") : null;
+    // Only use existing labels, never input values or identifier contents.
+    const label = object.matches(".fake-card") ? "demo sadržaj" :
+      caption?.textContent || object.textContent || object.tagName;
+    return label.trim().replace(/\\s+/g, " ").slice(0, 70);
+  }
+
+  addEventListener("pointermove", event => {
     if (!running || document.hidden) return;
-    // Record only a completed five-second pause after actual pointer movement.
-    // Each movement restarts the timer; no pointer coordinates are stored.
+    // Identify the existing element after five seconds without movement.
+    // Coordinates are used only temporarily, never recorded.
+    const x = event.clientX, y = event.clientY;
     clearTimeout(pointerIdleTimer);
     pointerIdleTimer = setTimeout(() => {
       pointerIdleTimer = null;
       if (running && !document.hidden && document.hasFocus()) {
-        logEvent("pointer_idle", "5 s", "pokazivač miruje pet sekundi");
+        logEvent("pointer_idle", "5 s", pointerObject(x, y));
       }
     }, 5000);
 

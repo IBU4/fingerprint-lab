@@ -327,6 +327,7 @@ pre{
   let timer = null;
   let fpAgent = null;
   let lastPointerSample = 0;
+  let pointerIdleTimer = null;
 
   const $ = id => document.getElementById(id);
 
@@ -556,6 +557,8 @@ pre{
     logEvent("tracking_pause", "manual", "simulator zaustavljen");
     running = false;
     clearInterval(timer);
+    clearTimeout(pointerIdleTimer);
+    pointerIdleTimer = null;
     $("startBtn").disabled = false;
     $("status").textContent = "Praćenje je pauzirano.";
   }
@@ -634,6 +637,8 @@ pre{
 
   addEventListener("blur", () => {
     if (!running) return;
+    clearTimeout(pointerIdleTimer);
+    pointerIdleTimer = null;
     session.summary.focusEvents++;
     logEvent("blur", "window blurred", "korisnik je napustio aktivni prozor/tab");
     updateSummary();
@@ -641,6 +646,10 @@ pre{
 
   document.addEventListener("visibilitychange", () => {
     if (!running) return;
+    if (document.hidden) {
+      clearTimeout(pointerIdleTimer);
+      pointerIdleTimer = null;
+    }
     session.summary.visible = !document.hidden;
     logEvent(
       "visibilitychange",
@@ -651,7 +660,17 @@ pre{
   });
 
   addEventListener("pointermove", () => {
-    if (!running) return;
+    if (!running || document.hidden) return;
+    // Record only a completed five-second pause after actual pointer movement.
+    // Each movement restarts the timer; no pointer coordinates are stored.
+    clearTimeout(pointerIdleTimer);
+    pointerIdleTimer = setTimeout(() => {
+      pointerIdleTimer = null;
+      if (running && !document.hidden && document.hasFocus()) {
+        logEvent("pointer_idle", "5 s", "pokazivač miruje pet sekundi");
+      }
+    }, 5000);
+
     const now = performance.now();
     if (now - lastPointerSample < 1000) return;
     lastPointerSample = now;

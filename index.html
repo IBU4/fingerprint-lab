@@ -80,9 +80,16 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <p id="adblockStatus" role="status" aria-live="polite" hidden style="color:#ffb86c;font-weight:600">Adblocking detected / suspected — GA4 je dopušten, ali učitavanje ili provjera nisu uspjeli.</p>
 <details id="gaDiagnostics" style="margin-top:10px">
 <summary style="cursor:pointer;color:#8be7da;font-size:14px">GA4 dijagnostika</summary>
+<label for="gaMode" class="muted" style="display:block;margin-top:14px">GA4 kanal</label>
+<select id="gaMode" style="width:100%;max-width:420px;padding:11px;margin:7px 0;background:#102235;border:1px solid #547486;border-radius:9px;color:#eaf1f8;font:inherit">
+<option value="tag">Standardni GA4 — Google tag</option>
+<option value="mp">Serverski GA4 — 1P Measurement Protocol</option>
+</select>
+<p class="muted">Promjena kanala osvježava stranicu. Samo jedan kanal šalje događaje.</p>
 <pre id="gaLog" aria-live="polite">Čeka privolu za GA4. Nema Google zahtjeva prije privole.</pre>
 <div class="actions">
 <button type="button" id="gaCheck" disabled>Provjeri GA4 tag</button>
+<button type="button" id="mpCheck" disabled>Provjeri MP kanal</button>
 <button type="button" id="probeRun" data-compact disabled>Provjeri komunikaciju</button>
 </div>
 <p id="probeStatus" role="status" aria-live="polite" hidden style="font-weight:600;color:#ffb86c"></p>

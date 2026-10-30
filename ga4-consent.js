@@ -18,7 +18,6 @@
   let started = false;
   let tagLoaded = false;
   let checkGeneration = 0;
-  let lines = [];
 
   try {
     const saved = localStorage.getItem(KEY);
@@ -42,11 +41,22 @@
     window.gtag("consent", "default", signal(false));
   }
 
+  // Like the tracking simulator: newest event first, fixed scroll pane.
+  // Preserve the reader's position when older entries are being reviewed.
   function log(message) {
-    lines.push(new Date().toLocaleTimeString("hr-HR") + "  " + message);
-    lines = lines.slice(-25);
     const output = el("gaLog");
-    if (output) output.textContent = lines.join("\n");
+    if (!output) return;
+    if (!output.dataset.logReady) {
+      output.textContent = "";
+      output.dataset.logReady = "1";
+    }
+    const oldTop = output.scrollTop;
+    const entry = document.createElement("span");
+    entry.className = "ga-log-entry";
+    entry.textContent = new Date().toLocaleTimeString("hr-HR") + "  " + message;
+    output.prepend(entry);
+    while (output.childElementCount > 25) output.lastElementChild.remove();
+    if (oldTop > 0) output.scrollTop = oldTop + entry.offsetHeight;
   }
 
   function controls() {

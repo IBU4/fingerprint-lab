@@ -95,9 +95,10 @@ export async function onRequestPost({ request, env }) {
   if (typeof country === "string" && /^[A-Z]{2}$/.test(country)) {
     payload.user_location = { country_id: country };
   }
+  // GA4 supports user_agent as an alternative to the optional structured device object.
+  // Do not send an incomplete device object: strict validation requires device.model.
   const ua = request.headers.get("user-agent") || "";
-  payload.device = { category: /Mobile|Android|iPhone|iPod/i.test(ua) ? "mobile" :
-    /iPad|Tablet/i.test(ua) ? "tablet" : "desktop" };
+  if (ua) payload.user_agent = ua.slice(0, 500);
   if (event === "mp_test_event" && incoming.validate === true) {
     payload.validation_behavior = "ENFORCE_RECOMMENDATIONS";
   }

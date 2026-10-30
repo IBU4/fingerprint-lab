@@ -225,7 +225,7 @@
     if (gaCheck) gaCheck.addEventListener("click", checkGA4);
     controls();
     if (choice === "granted") startGA4();
-    else if (choice === null) openPreferences();
+    else if (choice === null && location.pathname !== "/privacy.html") openPreferences();
     else log("Privola GA4: NE. Tag nije učitan.");
     document.dispatchEvent(new CustomEvent("fingerprintlab:ga-consent", {
       detail: { granted: choice === "granted" }

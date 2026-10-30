@@ -231,6 +231,10 @@
     const button = el("mpCheck");
     if (button) button.disabled = true;
     try {
+      // Diagnostic only: never display or upload the ID itself.
+      const existingGA = /^GA\\d+\\.\\d+\\.\\d{1,10}\\.\\d{1,10}$/.test(getCookie("_ga"));
+      log("GA4 MP: izvor client_id: " +
+        (existingGA ? "postojeći _ga kolačić." : "lokalno generirani MP identifikator."));
       log("GA4 MP: provjera valjanosti testnog događaja...");
       const check = await sendMP("mp_test_event", {}, true);
       if (check.validation?.length) {

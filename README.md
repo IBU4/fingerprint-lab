@@ -4,7 +4,7 @@ Independent browser fingerprinting and tracking research laboratory.
 
 ## What you can explore
 
-- **Fingerprint Pro** — compare direct and first-party identification methods, examine test results, and export your own observations.
+- **Fingerprint Pro** — Compare direct and first-party identification methods, examine test results, and export your own observations.
 - **Server Lab** — optionally inspect additional information associated with a test, subject to access authorization and service availability.
 - **First-party Tracking Simulator** — explore how browser storage and behavioral events can be used in a local demonstration.
 - **FingerprintJS OSS** — examine browser fingerprint components and export raw test results.

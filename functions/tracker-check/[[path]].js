@@ -50,8 +50,8 @@ export async function onRequest({request, env}) {
       ).bind(sid, attempt).run();
       return new Response(null, {status:204, headers:{"Cache-Control":"no-store"}});
     }
-    // The select and reset run as one D1 batch transaction. Clearing attempt_id
-    // ensures late marks from an earlier attempt cannot poison the next check.
+    // Read and delete the attempt atomically. A late mark cannot recreate
+    // a deleted row. The session cookie may be reused for the next test.
     const attempt = request.headers.get("X-Probe-Attempt") || "";
     if (!UUID.test(attempt)) return json({error:"invalid_attempt"}, 400);
     const results = await env.TRACKER_DB.batch([
@@ -59,7 +59,7 @@ export async function onRequest({request, env}) {
         "SELECT value FROM tracker_probe WHERE session_id = ?1 AND attempt_id = ?2"
       ).bind(sid, attempt),
       env.TRACKER_DB.prepare(
-        "UPDATE tracker_probe SET value = 0, attempt_id = '' WHERE session_id = ?1 AND attempt_id = ?2"
+        "DELETE FROM tracker_probe WHERE session_id = ?1 AND attempt_id = ?2"
       ).bind(sid, attempt)
     ]);
     const row = results[0]?.results?.[0];

@@ -61,6 +61,8 @@ export async function onRequestPost({ request, env }) {
       ? params.page_title.slice(0, 100) : "Fingerprint Lab";
   } else if (event === "mp_test_event") {
     output.test_source = "fingerprint_lab";
+    // Show only diagnostic tests in GA4 DebugView, not production analytics events.
+    output.debug_mode = true;
   } else {
     if (!SECTIONS.has(params.section_id)) {
       return json({ ok: false, error: "invalid_section" }, 400);

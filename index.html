@@ -204,35 +204,49 @@ function gaConsent(granted) {
   return {analytics_storage: granted ? "granted" : "denied",
     ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied"};
 }
+// Basic Consent Mode v2: establish defaults locally, before any Google tag loads.
+// No Google request is made until the visitor explicitly opts in.
+window.dataLayer = window.dataLayer || [];
+window.gtag = function(){ window.dataLayer.push(arguments); };
+window["ga-disable-" + gaId] = true;
+window.gtag("consent", "default", gaConsent(false));
+
 function gaInit() {
-  if (gaLoaded) return;
-  gaLoaded = true;
-  gaScriptLoaded = false;
+  const firstLoad = !gaLoaded;
+  if (firstLoad) gaLoaded = true;
   adblockStatus(false);
-  const generation = ++gaGeneration;
-  $("gaCheck").disabled = true;
-  gaLog("Privola GA4: DA.");
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){ window.dataLayer.push(arguments); };
-  // Basic Consent Mode: load GA only after explicit opt-in.
-  // The initial consent state must be granted before the GA4 config/page_view.
-  window.gtag("consent", "default", gaConsent(true));
-  window.gtag("js", new Date());
+  ++gaGeneration;
+  $("gaCheck").disabled = !gaScriptLoaded;
+  gaLog(firstLoad ? "Privola GA4: DA." : "Privola GA4: ponovno DA.");
+  window["ga-disable-" + gaId] = false;
+  window.gtag("consent", "update", gaConsent(true));
+  if (firstLoad) window.gtag("js", new Date());
   window.gtag("config", gaId, {allow_google_signals:false, allow_ad_personalization_signals:false});
   gaLog("Config i automatski page_view dodani u dataLayer (ne potvrđuje slanje).");
+
+  if (!firstLoad) {
+    $("gaStatus").textContent = gaScriptLoaded
+      ? "GA4: privola obnovljena; tag aktivan."
+      : "GA4: privola obnovljena; čeka se učitavanje taga.";
+    if (gaScriptLoaded) gaCheck();
+    return;
+  }
+
   const script = document.createElement("script");
   script.async = true;
   script.src = "/mosaic/";
   script.onload = () => {
-    if (generation !== gaGeneration || !$("gaConsent").checked) return;
     gaScriptLoaded = true;
+    if (!$("gaConsent").checked) return;
     $("gaCheck").disabled = false;
     gaLog("gtag.js: ONLOAD (skripta preuzeta i izvršena; HTTP collect još nije potvrđen).");
     $("gaStatus").textContent = "GA4: gtag.js učitan; prijem podataka nije potvrđen.";
     gaCheck();
   };
   script.onerror = () => {
-    if (generation !== gaGeneration) return;
+    gaLoaded = false;
+    gaScriptLoaded = false;
+    if (!$("gaConsent").checked) return;
     gaLog("gtag.js: ONERROR (blokirano ili mrežna pogreška).");
     adblockStatus(true);
     $("gaStatus").textContent = "GA4: učitavanje blokirano ili neuspješno.";
@@ -244,9 +258,9 @@ function gaRevoke() {
   ++gaGeneration;
   adblockStatus(false);
   $("gaCheck").disabled = true;
-  gaScriptLoaded = false;
   gaLog("Privola GA4: POVUČENA. Analitička pohrana postavljena na denied.");
-  if (window.gtag) window.gtag("consent", "update", gaConsent(false));
+  window["ga-disable-" + gaId] = true;
+  window.gtag("consent", "update", gaConsent(false));
   const names = document.cookie.split(";").map(x => x.trim().split("=")[0])
     .filter(x => x === "_ga" || x.startsWith("_ga_"));
   for (const name of names) {

@@ -3,8 +3,8 @@
 (() => {
   "use strict";
 
-  const consent = document.getElementById("gaConsent");
-  if (!consent) return;
+  // This page uses the shared, site-wide GA4 consent manager.
+  if (!window.FingerprintLabGA4) return;
 
   const definitions = [
     ["identification", "#run"],
@@ -33,7 +33,7 @@
   const MIN_REPORT_SECONDS = 2;
 
   function permitted() {
-    return consent.checked && typeof window.gtag === "function";
+    return window.FingerprintLabGA4.hasConsent() && typeof window.gtag === "function";
   }
 
   function emit(eventName, parameters) {
@@ -110,15 +110,7 @@
     lastSample = performance.now();
   }
 
-  // GA4's existing opt-in handler creates gtag synchronously on change.
-  // Defer our first sample until all checkbox change handlers have run.
-  consent.addEventListener("change", () => {
-    if (!consent.checked) {
-      reset();
-    } else {
-      setTimeout(() => { if (consent.checked) syncConsent(); }, 0);
-    }
-  });
+  document.addEventListener("fingerprintlab:ga-consent", syncConsent);
   if (permitted()) syncConsent();
 
   setInterval(sample, 1000);

@@ -33,12 +33,13 @@
   const MIN_REPORT_SECONDS = 2;
 
   function permitted() {
-    return window.FingerprintLabGA4.hasConsent() && typeof window.gtag === "function";
+    return window.FingerprintLabGA4.hasConsent() &&
+      typeof window.FingerprintLabGA4.sendEvent === "function";
   }
 
   function emit(eventName, parameters) {
     if (!enabled || !permitted()) return;
-    window.gtag("event", eventName, { ...metadata, ...parameters });
+    window.FingerprintLabGA4.sendEvent(eventName, { ...metadata, ...parameters });
   }
 
   function sufficientlyVisible(element) {

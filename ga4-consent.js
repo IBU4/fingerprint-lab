@@ -44,7 +44,7 @@
     if (gaCheck) gaCheck.disabled = !allowed || !tagLoaded;
     // The first-party communication probe remains a separate implementation,
     // but its button in the GA4 diagnostics area follows that area's consent.
-    if (probe) probe.disabled = !allowed;
+    if (probe && el("gaDiagnostics")) probe.disabled = !allowed;
     const adblock = el("adblockStatus");
     if (adblock && !allowed) adblock.hidden = true;
     const status = el("gaStatus");

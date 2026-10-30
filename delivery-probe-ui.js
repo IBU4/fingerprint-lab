@@ -7,6 +7,7 @@
   const status = document.getElementById("probeStatus");
   const output = document.getElementById("probeResults");
   if (!button || !status || !output) return;
+  const compact = button.hasAttribute("data-compact");
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const endpoint = id => "/delivery-probe?id=" + encodeURIComponent(id);
@@ -28,6 +29,8 @@
 
   button.addEventListener("click", async () => {
     button.disabled = true;
+    status.hidden = false;
+    output.hidden = false;
     status.textContent = "Provjera u tijeku...";
     output.textContent = "Čekanje potvrde poslužitelja...";
 
@@ -89,7 +92,20 @@
         status.textContent = "Neodređen rezultat.";
         lines.push("Zaključak: bez potvrde kontrolnog fetch zahtjeva nije moguće pripisati uzrok Beaconu.");
       }
-      output.textContent = lines.join("\n");
+      if (compact) {
+        // A missing confirmation is an indicator, not proof of adblocking.
+        const suspected = !beaconReceived || !fetchReceived;
+        status.textContent = lookupError
+          ? "Provjera nije uspjela"
+          : suspected ? "Adblocking detected / suspected" : "Komunikacija: OK";
+        output.textContent = lookupError
+          ? "Potvrda poslužitelja nije dostupna."
+          : "Beacon: " + (beaconReceived ? "OK" : "nije potvrđen") +
+            " · fetch: " + (fetchReceived ? "OK" : "nije potvrđen") +
+            " (testni poslužitelj).";
+      } else {
+        output.textContent = lines.join("\n");
+      }
     } catch (error) {
       status.textContent = "Test se nije mogao dovršiti.";
       output.textContent = String(error?.message || error);

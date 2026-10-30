@@ -24,11 +24,14 @@
   });
   const el = id => document.getElementById(id);
 
-  // Define consent before loading a Google script. No network request here.
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
-  window["ga-disable-" + GA_ID] = true;
-  window.gtag("consent", "default", signal(false));
+  // The default consent state is established synchronously in each page's HEAD.
+  // Fallback for an outdated page or an interrupted inline bootstrap.
+  if (!window.FingerprintLabConsentBootstrapped) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window["ga-disable-" + GA_ID] = true;
+    window.gtag("consent", "default", signal(false));
+  }
 
   function log(message) {
     lines.push(new Date().toLocaleTimeString("hr-HR") + "  " + message);

@@ -5,6 +5,15 @@
   const KEY = "fingerprint_lab_ga4_consent_v1";
   const GA_ID = "G-F6JRRE08DC";
   const TAG_URL = "/mosaic/";
+  const MODE_KEY = "fingerprint_lab_ga4_mode_v1";
+  const MP_CLIENT_KEY = "fingerprint_lab_ga4_mp_client_v1";
+  const MP_SESSION_KEY = "fingerprint_lab_ga4_mp_session_v1";
+  let mode = "tag";
+  try { if (localStorage.getItem(MODE_KEY) === "mp") mode = "mp"; } catch {}
+  let mpClientMemory = "";
+  let mpSessionMemory = null;
+  let mpPageSent = false;
+  let mpLastEventAt = performance.now();
   let choice = null;
   let started = false;
   let tagLoaded = false;
@@ -44,17 +53,25 @@
     const allowed = choice === "granted";
     const gaCheck = el("gaCheck");
     const probe = el("probeRun");
-    if (gaCheck) gaCheck.disabled = !allowed || !tagLoaded;
+    if (gaCheck) gaCheck.disabled = !allowed || mode !== "tag" || !tagLoaded;
+    const mpCheck = el("mpCheck");
+    if (mpCheck) mpCheck.disabled = !allowed || mode !== "mp";
+    const gaMode = el("gaMode");
+    if (gaMode) gaMode.value = mode;
     // The first-party communication probe remains a separate implementation,
     // but its button in the GA4 diagnostics area follows that area's consent.
     if (probe && el("gaDiagnostics")) probe.disabled = !allowed;
     const adblock = el("adblockStatus");
     if (adblock && !allowed) adblock.hidden = true;
     const status = el("gaStatus");
-    if (status && !allowed) {
-      status.textContent = choice === "denied"
-        ? "GA4: odbijeno. Analitika je isključena."
-        : "GA4: čeka odluku o privoli.";
+    if (status) {
+      if (!allowed) {
+        status.textContent = choice === "denied"
+          ? "GA4: odbijeno. Analitika je isključena."
+          : "GA4: čeka odluku o privoli.";
+      } else if (mode === "mp") {
+        status.textContent = "GA4 MP: aktivan first-party serverski kanal.";
+      }
     }
   }
 
@@ -87,7 +104,7 @@
   }
 
   function startGA4() {
-    if (choice !== "granted" || started) return;
+    if (choice !== "granted" || mode !== "tag" || started) return;
     started = true;
     window["ga-disable-" + GA_ID] = false;
     window.gtag("consent", "update", signal(true));
@@ -123,6 +140,121 @@
     document.head.appendChild(script);
   }
 
+  function getCookie(name) {
+    return document.cookie.split(";").map(x => x.trim())
+      .find(x => x.startsWith(name + "="))?.slice(name.length + 1) || "";
+  }
+
+  function mpClientId() {
+    // Where available, reuse the same identifier GA4 assigned through gtag.
+    const ga = getCookie("_ga");
+    const match = ga.match(/^GA\d+\.\d+\.(\d{1,10}\.\d{1,10})$/);
+    if (match) return match[1];
+    if (mpClientMemory) return mpClientMemory;
+    try {
+      const stored = localStorage.getItem(MP_CLIENT_KEY);
+      if (stored && /^\d{1,10}\.\d{1,10}$/.test(stored)) return (mpClientMemory = stored);
+      const parts = new Uint32Array(2);
+      crypto.getRandomValues(parts);
+      mpClientMemory = String(parts[0]) + "." + String(parts[1]);
+      localStorage.setItem(MP_CLIENT_KEY, mpClientMemory);
+      return mpClientMemory;
+    } catch {
+      const parts = new Uint32Array(2);
+      crypto.getRandomValues(parts);
+      return (mpClientMemory = String(parts[0]) + "." + String(parts[1]));
+    }
+  }
+
+  function mpSessionId() {
+    const now = Date.now();
+    let previous = mpSessionMemory;
+    if (!previous) {
+      try { previous = JSON.parse(localStorage.getItem(MP_SESSION_KEY)); } catch {}
+    }
+    if (!previous || !Number.isSafeInteger(previous.id) ||
+        !Number.isFinite(previous.last) || now - previous.last > 1800000 ||
+        previous.last > now + 60000) {
+      previous = { id: Math.floor(now / 1000), last: now };
+    } else {
+      previous.last = now;
+    }
+    mpSessionMemory = previous;
+    try { localStorage.setItem(MP_SESSION_KEY, JSON.stringify(previous)); } catch {}
+    return previous.id;
+  }
+
+  async function sendMP(eventName, parameters = {}, validate = false) {
+    if (choice !== "granted" || mode !== "mp") return null;
+    const now = performance.now();
+    const engagement = Math.max(1, Math.min(60000,
+      Math.round(now - mpLastEventAt)));
+    mpLastEventAt = now;
+    const response = await fetch("/ga-mp", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      keepalive: true,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        mode: "mp", consent: "granted",
+        client_id: mpClientId(), session_id: mpSessionId(),
+        event_name: eventName, params: parameters,
+        engagement_time_msec: engagement, validate
+      })
+    });
+    let result;
+    try { result = await response.json(); } catch { throw new Error("MP: neispravan odgovor."); }
+    if (!response.ok || !result.ok) throw new Error("MP: " + (result.error || "HTTP " + response.status));
+    return result;
+  }
+
+  function startMP() {
+    if (choice !== "granted" || mode !== "mp" || mpPageSent) return;
+    mpPageSent = true;
+    log("GA4 MP: privola DA; slanje page_view preko vlastite domene.");
+    sendMP("page_view", {
+      page_path: location.pathname, page_title: document.title
+    }).then(result => {
+      if (result?.accepted_by_endpoint) log("GA4 MP: page_view HTTP prihvaćen (obrada u GA4 nije potvrđena).");
+    }).catch(error => log(String(error?.message || error)));
+  }
+
+  function startAnalytics() {
+    if (mode === "mp") startMP();
+    else startGA4();
+    controls();
+  }
+
+  async function checkMP() {
+    if (choice !== "granted" || mode !== "mp") return;
+    const button = el("mpCheck");
+    if (button) button.disabled = true;
+    try {
+      log("GA4 MP: provjera valjanosti testnog događaja...");
+      const check = await sendMP("ga_mp_test", {}, true);
+      if (check.validation?.length) {
+        log("GA4 MP: validationMessages = " + JSON.stringify(check.validation).slice(0, 250));
+        return;
+      }
+      log("GA4 MP: validation OK; slanje testa.");
+      const actual = await sendMP("ga_mp_test");
+      if (actual?.accepted_by_endpoint) {
+        log("GA4 MP: testni POST prihvaćen; potvrdi događaj ga_mp_test u Realtimeu.");
+      }
+    } catch (error) {
+      log("GA4 MP: " + String(error?.message || error));
+    } finally { controls(); }
+  }
+
+  function switchMode(nextMode) {
+    if (!["tag", "mp"].includes(nextMode) || mode === nextMode) return;
+    mode = nextMode;
+    try { localStorage.setItem(MODE_KEY, nextMode); } catch {}
+    // Reload guarantees that two channels never generate duplicate page views.
+    location.reload();
+  }
+
   function clearGACookies() {
     const cookies = document.cookie.split(";").map(part => part.trim().split("=")[0])
       .filter(name => name === "_ga" || name.startsWith("_ga_"));
@@ -142,11 +274,17 @@
     if (dialog && dialog.open) dialog.close();
     controls();
     if (next === "granted") {
-      startGA4();
+      startAnalytics();
     } else {
       window["ga-disable-" + GA_ID] = true;
       window.gtag("consent", "update", signal(false));
       clearGACookies();
+      try {
+        localStorage.removeItem(MP_CLIENT_KEY);
+        localStorage.removeItem(MP_SESSION_KEY);
+      } catch {}
+      mpClientMemory = "";
+      mpSessionMemory = null;
       log("Privola GA4: NE. Analitika isključena.");
     }
     document.dispatchEvent(new CustomEvent("fingerprintlab:ga-consent", {
@@ -166,6 +304,15 @@
 
   window.FingerprintLabGA4 = {
     hasConsent: () => choice === "granted",
+    getMode: () => mode,
+    sendEvent: (name, params) => {
+      if (choice !== "granted") return;
+      if (mode === "mp") {
+        sendMP(name, params).catch(error => log(String(error?.message || error)));
+      } else if (typeof window.gtag === "function") {
+        window.gtag("event", name, params);
+      }
+    },
     openPreferences
   };
 
@@ -226,8 +373,15 @@
 
     const gaCheck = el("gaCheck");
     if (gaCheck) gaCheck.addEventListener("click", checkGA4);
+    const mpCheck = el("mpCheck");
+    if (mpCheck) mpCheck.addEventListener("click", checkMP);
+    const gaMode = el("gaMode");
+    if (gaMode) {
+      gaMode.value = mode;
+      gaMode.addEventListener("change", () => switchMode(gaMode.value));
+    }
     controls();
-    if (choice === "granted") startGA4();
+    if (choice === "granted") startAnalytics();
     else if (choice === null && location.pathname !== "/privacy.html") openPreferences();
     else log("Privola GA4: NE. Tag nije učitan.");
     document.dispatchEvent(new CustomEvent("fingerprintlab:ga-consent", {

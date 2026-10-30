@@ -40,6 +40,9 @@ button:disabled{opacity:.46;cursor:not-allowed}.primary{background:#78e4d4;borde
 input[type=text],input[type=password]{width:100%;background:#0c1724;border:1px solid #506579;border-radius:9px;padding:12px;color:white;font:15px ui-monospace,monospace}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto;background:#0a1420;border:1px solid #31445a;border-radius:10px;padding:15px;font-size:12px;line-height:1.55;color:#c7dcec}
+#gaDiagnostics{min-width:0;max-width:100%}
+#gaLog{display:block;box-sizing:border-box;width:100%;min-width:0;height:280px;min-height:280px;max-height:280px;overflow-y:auto;overflow-x:hidden;overflow-anchor:none;overscroll-behavior:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:12px/1.55 ui-monospace,Consolas,monospace}
+#gaLog .ga-log-entry{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
 #compare{color:#bcd2e6;padding-top:12px}.foot{margin-top:30px;line-height:1.7}
 .mode-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
 .mode-choice label{display:flex;align-items:center;gap:9px;padding:12px;border:1px solid #547486;border-radius:10px;background:#0d1c2a;cursor:pointer;font-size:14px;line-height:1.4}
@@ -86,7 +89,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <option value="mp">Serverski GA4 — 1P Measurement Protocol</option>
 </select>
 <p class="muted">Promjena kanala osvježava stranicu. Samo jedan kanal šalje događaje.</p>
-<pre id="gaLog" aria-live="polite">Čeka privolu za GA4. Nema Google zahtjeva prije privole.</pre>
+<pre id="gaLog" role="log" aria-label="GA4 zapis događaja" aria-live="polite" aria-relevant="additions" tabindex="0">Čeka privolu za GA4. Nema Google zahtjeva prije privole.</pre>
 <div class="actions">
 <button type="button" id="gaCheck" disabled>Provjeri GA4 tag</button>
 <button type="button" id="mpCheck" disabled>Provjeri MP kanal</button>

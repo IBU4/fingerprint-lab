@@ -166,8 +166,28 @@
     }
   }
 
+  function gaSessionIdFromCookie() {
+    // The GA4 session cookie has both legacy GS1 and newer GS2 formats.
+    // Parse only the session start; never forward the cookie itself to the server.
+    const cookie = getCookie("_ga_" + GA_ID.slice(2));
+    const gs2 = cookie.match(/^GS2\.\d+\.s(\d{9,12})(?:\$|$)/);
+    if (gs2) return Number(gs2[1]);
+    const gs1 = cookie.match(/^GS1\.\d+\.(\d{9,12})(?:\.|$)/);
+    return gs1 ? Number(gs1[1]) : null;
+  }
+
   function mpSessionId() {
     const now = Date.now();
+    const taggedSessionId = gaSessionIdFromCookie();
+    // Reuse an established GA session while it remains active. MP sends must
+    // keep that same ID rather than creating a different session for each page.
+    if (taggedSessionId && now >= taggedSessionId * 1000 &&
+        now - taggedSessionId * 1000 < 1800000 &&
+        (!mpSessionMemory || now - mpSessionMemory.last < 1800000)) {
+      mpSessionMemory = { id: taggedSessionId, last: now };
+      try { localStorage.setItem(MP_SESSION_KEY, JSON.stringify(mpSessionMemory)); } catch {}
+      return taggedSessionId;
+    }
     let previous = mpSessionMemory;
     if (!previous) {
       try { previous = JSON.parse(localStorage.getItem(MP_SESSION_KEY)); } catch {}
@@ -209,15 +229,30 @@
     return result;
   }
 
+  function mpPageStatus(message) {
+    const status = el("mpPageStatus");
+    if (status) status.textContent = message;
+  }
+
   function startMP() {
     if (choice !== "granted" || mode !== "mp" || mpPageSent) return;
     mpPageSent = true;
     log("GA4 MP: privola DA; slanje page_view preko vlastite domene.");
+    mpPageStatus("GA4 MP: slanje page_view za " + location.pathname + "…");
     sendMP("page_view", {
       page_path: location.pathname, page_title: document.title
     }).then(result => {
-      if (result?.accepted_by_endpoint) log("GA4 MP: page_view HTTP prihvaćen (obrada u GA4 nije potvrđena).");
-    }).catch(error => log(String(error?.message || error)));
+      if (result?.accepted_by_endpoint) {
+        log("GA4 MP: page_view HTTP prihvaćen za " + location.pathname +
+          " (obrada u GA4 nije potvrđena).");
+        mpPageStatus("GA4 MP: page_view za " + location.pathname +
+          " — HTTP prihvaćen; obrada u GA4 nije potvrđena.");
+      }
+    }).catch(error => {
+      const message = String(error?.message || error);
+      log("GA4 MP: page_view " + location.pathname + " — " + message);
+      mpPageStatus("GA4 MP: page_view za " + location.pathname + " — " + message);
+    });
   }
 
   function startAnalytics() {
@@ -235,6 +270,11 @@
       const existingGA = /^GA\d+\.\d+\.\d{1,10}\.\d{1,10}$/.test(getCookie("_ga"));
       log("GA4 MP: izvor client_id: " +
         (existingGA ? "postojeći _ga kolačić." : "lokalno generirani MP identifikator."));
+      const existingSession = gaSessionIdFromCookie();
+      log("GA4 MP: session_id: " +
+        (existingSession && Date.now() - existingSession * 1000 < 1800000 &&
+          Date.now() >= existingSession * 1000 ? "postojeća GA4 sesija." :
+          "samostalna MP sesija (nije povezana s gtag sesijom)."));
       log("GA4 MP: provjera valjanosti testnog događaja...");
       const check = await sendMP("mp_test_event", {}, true);
       if (check.validation?.length) {
@@ -373,6 +413,18 @@
       button.addEventListener("click", openPreferences);
       footer.appendChild(button);
       main.appendChild(footer);
+
+      if (mode === "mp" && choice === "granted") {
+        const status = document.createElement("p");
+        status.id = "mpPageStatus";
+        status.className = "ga4-consent-footer";
+        status.style.marginTop = "6px";
+        status.style.fontSize = "12px";
+        status.style.color = "#91a4b6";
+        status.setAttribute("role", "status");
+        status.textContent = "GA4 MP: priprema page_view…";
+        main.appendChild(status);
+      }
     }
 
     const gaCheck = el("gaCheck");

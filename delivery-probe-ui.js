@@ -95,6 +95,7 @@
       if (compact) {
         // A missing confirmation is an indicator, not proof of adblocking.
         const suspected = !beaconReceived || !fetchReceived;
+        status.style.color = !lookupError && !suspected ? "#85edbd" : "#ffb86c";
         status.textContent = lookupError
           ? "Provjera nije uspjela"
           : suspected ? "Adblocking detected / suspected" : "Komunikacija: OK";

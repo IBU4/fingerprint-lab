@@ -675,7 +675,7 @@ pre{
     // Only use existing labels, never input values or identifier contents.
     const label = object.matches(".fake-card") ? "demo sadržaj" :
       caption?.textContent || object.textContent || object.tagName;
-    return label.trim().replace(/\\s+/g, " ").slice(0, 70);
+    return label.trim().replace(/\s+/g, " ").slice(0, 70);
   }
 
   addEventListener("pointermove", event => {

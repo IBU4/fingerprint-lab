@@ -1,7 +1,7 @@
 // First-party GA4 Measurement Protocol experiment (web stream, EU endpoint).
 // API secret never leaves the Cloudflare server. Explicit opt-in only.
 const STREAM = "G-F6JRRE08DC";
-const ALLOWED = new Set(["page_view", "section_view", "section_engagement", "section_interaction", "ga_mp_test"]);
+const ALLOWED = new Set(["page_view", "section_view", "section_engagement", "section_interaction", "mp_test_event"]);
 const PAGES = new Set(["/", "/index.html", "/tracking-simulator.html", "/fingerprintjs-raw.html", "/beacon-test.html", "/privacy.html"]);
 const SECTIONS = new Set(["identification", "results", "server_lab_and_response", "tracking_simulator", "raw_components", "documentation"]);
 const ACTIONS = new Set(["run_test", "check_ga4_tag", "copy_vid", "export_json", "fetch_event", "copy_event_json", "export_event_json", "open_simulator", "open_raw_components", "open_privacy", "open_reference", "select_direct", "select_proxy", "open_ga_diagnostics"]);
@@ -50,7 +50,7 @@ export async function onRequestPost({ request, env }) {
     session_id: incoming.session_id,
     engagement_time_msec: Math.min(60000, Math.max(1, Number.isFinite(incoming.engagement_time_msec)
       ? Math.round(incoming.engagement_time_msec) : 100)),
-    ga_channel: "server_mp"
+    delivery_channel: "server_mp"
   };
   if (event === "page_view") {
     if (typeof params.page_path !== "string" || !PAGES.has(params.page_path)) {
@@ -59,7 +59,7 @@ export async function onRequestPost({ request, env }) {
     output.page_location = url.origin + params.page_path;
     output.page_title = typeof params.page_title === "string"
       ? params.page_title.slice(0, 100) : "Fingerprint Lab";
-  } else if (event === "ga_mp_test") {
+  } else if (event === "mp_test_event") {
     output.test_source = "fingerprint_lab";
   } else {
     if (!SECTIONS.has(params.section_id)) {
@@ -98,10 +98,10 @@ export async function onRequestPost({ request, env }) {
   const ua = request.headers.get("user-agent") || "";
   payload.device = { category: /Mobile|Android|iPhone|iPod/i.test(ua) ? "mobile" :
     /iPad|Tablet/i.test(ua) ? "tablet" : "desktop" };
-  if (event === "ga_mp_test" && incoming.validate === true) {
+  if (event === "mp_test_event" && incoming.validate === true) {
     payload.validation_behavior = "ENFORCE_RECOMMENDATIONS";
   }
-  const validateOnly = event === "ga_mp_test" && incoming.validate === true;
+  const validateOnly = event === "mp_test_event" && incoming.validate === true;
   const endpoint = validateOnly ? "/debug/mp/collect" : "/mp/collect";
   const upstreamUrl = new URL("https://region1.google-analytics.com" + endpoint);
   upstreamUrl.searchParams.set("measurement_id", STREAM);

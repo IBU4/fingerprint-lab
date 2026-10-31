@@ -37,6 +37,10 @@ button:disabled{opacity:.46;cursor:not-allowed}.primary{background:#78e4d4;borde
 .field{margin:17px 0}.field span{display:block;font-size:13px;color:#9fb5c9;margin-bottom:6px}
 .field strong{font:600 15px ui-monospace,Consolas,monospace;color:#dfeafa;overflow-wrap:anywhere}
 #visitor{color:#80ead5;font-size:18px}
+.score{display:inline-block;padding:6px 11px;border-radius:9px;background:#27394a;color:#c4d6e7}
+.score.score-ok{color:#85edbd;background:#163b31;border:1px solid #34775f}
+.score.score-captcha{color:#f9d08b;background:#46391f;border:1px solid #94752f}
+.score.score-block{color:#ffb5ac;background:#49272d;border:1px solid #a14d57}
 input[type=text],input[type=password]{width:100%;background:#0c1724;border:1px solid #506579;border-radius:9px;padding:12px;color:white;font:15px ui-monospace,monospace}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto;background:#0a1420;border:1px solid #31445a;border-radius:10px;padding:15px;font-size:12px;line-height:1.55;color:#c7dcec}
@@ -107,7 +111,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <div id="status" class="status">Spremno za test</div>
 <div class="field"><span>Visitor ID</span><strong id="visitor">—</strong></div>
 <div class="field"><span>Event ID</span><strong id="event">—</strong></div>
-<div class="field"><span>Visitor found (ako je dostupno)</span><strong id="found">—</strong></div>
+<div class="field"><span>Suspect Score</span><strong id="score" class="score">—</strong></div>
 <div class="field"><span>Trajanje / lokalno vrijeme</span><strong id="timing">—</strong></div>
 <div class="actions"><button type="button" id="copy" disabled>Kopiraj VID</button><button type="button" id="save" disabled>Spremi JSON</button></div>
 </section>
@@ -221,6 +225,25 @@ function getField(data, ...keys) {
   }
   return null;
 }
+function showScore(value) {
+  const el = $("score");
+  const score = value === null || value === undefined || value === "" ? NaN : Number(value);
+  el.className = "score";
+  if (!Number.isFinite(score) || score < 0) {
+    el.textContent = "—";
+    return;
+  }
+  if (score <= 20) {
+    el.textContent = score + " — OK";
+    el.classList.add("score-ok");
+  } else if (score <= 30) {
+    el.textContent = score + " — CAPTCHA";
+    el.classList.add("score-captcha");
+  } else {
+    el.textContent = score + " — BLOCK 403";
+    el.classList.add("score-block");
+  }
+}
 function ready() {
   $("run").disabled = busy || !$("consent").checked;
   document.querySelectorAll('input[name="mode"]').forEach(r => {
@@ -237,7 +260,8 @@ function compare() {
 function showResult() {
   const record = latest[mode];
   if (!record) {
-    ["visitor", "event", "found", "timing"].forEach(id => show(id, null));
+    ["visitor", "event", "timing"].forEach(id => show(id, null));
+    showScore(null);
     $("json").textContent = "Pokreni identifikaciju za prikaz JSON odgovora.";
     $("copy").disabled = true;
     $("save").disabled = true;
@@ -245,7 +269,7 @@ function showResult() {
   } else {
     show("visitor", record.vid || "(nije vraćen)");
     show("event", record.event);
-    show("found", record.found);
+    showScore(record.score);
     show("timing", record.elapsed + " ms · " + record.time);
     $("json").textContent = JSON.stringify(record.data, null, 2);
     $("copy").disabled = !record.vid;
@@ -303,10 +327,10 @@ $("run").addEventListener("click", async () => {
     const identity = data.identification?.data?.result || data.identification || data;
     const vid = String(getField(identity, "visitor_id", "visitorId") ?? getField(data, "visitor_id", "visitorId") ?? "");
     const event = getField(data, "event_id", "request_id", "requestId");
-    const found = getField(identity, "visitor_found", "visitorFound");
+    const score = getField(data, "suspect_score", "suspectScore");
     const time = new Date().toLocaleString("hr-HR");
     const elapsed = Math.round(performance.now() - started);
-    latest[selectedMode] = { data, vid, event, found, time, elapsed };
+    latest[selectedMode] = { data, vid, event, score, time, elapsed };
     historyItems.unshift({ mode: selectedMode, time, vid: vid || "(prazan)" });
     historyItems.splice(10);
     $("history").textContent = historyItems.map((x, i) =>

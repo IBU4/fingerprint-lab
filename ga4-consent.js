@@ -119,12 +119,10 @@
     window["ga-disable-" + GA_ID] = false;
     window.gtag("consent", "update", signal(true));
     window.gtag("js", new Date());
-    // Match the existing delivery_channel marker on the MP path.
-    // This is an event parameter, not a user identifier.
-    window.gtag("set", { delivery_channel: "standard_tag" });
     const config = {
       allow_google_signals: false,
-      allow_ad_personalization_signals: false
+      allow_ad_personalization_signals: false,
+      delivery_channel: "standard_tag"
     };
     // A prior opt-in MP session can identify the same browser when the tag
     // is enabled for the first time. Never overwrite an existing GA cookie.
@@ -399,7 +397,7 @@
       if (mode === "mp") {
         sendMP(name, params).catch(error => log(String(error?.message || error)));
       } else if (typeof window.gtag === "function") {
-        window.gtag("event", name, params);
+        window.gtag("event", name, { ...(params || {}), delivery_channel: "standard_tag" });
       }
     },
     openPreferences

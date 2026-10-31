@@ -30,25 +30,35 @@ p{max-width:76ch}
 <main>
 <p><a href="/">← Fingerprint Lab</a></p>
 <h1>Privatnost i obrada podataka</h1>
-<p>Fingerprint Lab neovisan je istraživački projekt. Testovi su dobrovoljni. Registracija nije potrebna.</p>
+<p>Fingerprint Lab (IBU4) osobni je, nekomercijalni istraživački projekt. Nije trgovina, portal ni oglasna usluga. Nema registracije ni obveze sudjelovanja u testovima. Stranice tražilicama šalju uputu da ih ne indeksiraju, ali poveznica može biti dostupna osobama koje je imaju.</p>
 
-<h2>Hosting i posjeti</h2>
-<p>Cloudflare poslužuje stranicu, obrađuje tehničke podatke o prometu i pruža statistiku posjećenosti.</p>
+<h2>Voditelj projekta i kontakt</h2>
+<p>Projekt održava autor pod oznakom IBU4. Za pitanja o obradi podataka i ostvarivanje prava obrati se na <a href="mailto:31tidytgv@mozmail.com">31tidytgv@mozmail.com</a>.</p>
 
-<h2>Fingerprint testovi</h2>
-<p>Fingerprint Pro pokreće se samo na zahtjev korisnika. Servis obrađuje podatke potrebne za identifikacijski test. Rezultate možeš pregledati i spremiti. Server Lab dostupan je samo uz autorizirani pristup.</p>
-<p>FingerprintJS OSS test prikazuje rezultate lokalno u pregledniku, bez slanja tih rezultata Fingerprint Pro servisu.</p>
+<h2>Hosting i tehnička obrada</h2>
+<p>Cloudflare poslužuje stranicu i obrađuje podatke potrebne za isporuku zahtjeva, dostupnost i sigurnost. To može uključivati IP adresu, podatke o pregledniku i mrežne informacije. Laboratorij zasebno bilježi ograničene tehničke pokazatelje prometa, poput zatražene putanje, statusa odgovora, približne države i vrste preglednika, bez upisivanja Fingerprint Visitor ID-a u taj zapis. Ova obrada ne ovisi o privoli za GA4.</p>
+<p>Svrha osnovne tehničke obrade jest rad i zaštita stranice; pravna osnova, kada se primjenjuje GDPR, jest legitimni interes za održavanje i sigurnost usluge (članak 6. stavak 1. točka (f) GDPR-a).</p>
+
+<h2>Dobrovoljni fingerprint testovi</h2>
+<p>Fingerprint Pro pokreće se tek nakon korisnikove potvrde i pritiska gumba za test. Obrađuje tehničke signale preglednika radi identifikacijskog eksperimenta i može vratiti pseudonimni Visitor ID i podatke o testu. Rezultati su prikazani korisniku, a autorizirani Server Lab može ih zasebno dohvatiti. FingerprintJS OSS test prikazuje rezultat lokalno; sam OSS rezultat ne šalje se Fingerprint Pro servisu.</p>
+<p>Svrha je dobrovoljno ispitivanje načina identifikacije preglednika. Test nije uvjet za pregledavanje stranice. Podaci o identifikaciji ne koriste se za automatsko donošenje odluka s pravnim ili slično značajnim učincima. Za obradu povezanu s dobrovoljno pokrenutim Fingerprint Pro testom osnova je korisnikova privola (članak 6. stavak 1. točka (a) GDPR-a).</p>
 
 <h2>Google Analytics 4</h2>
-<p>GA4 se uključuje samo uz privolu, koja vrijedi za sve stranice laboratorija. Odluka se pamti u pregledniku i može se promijeniti u Postavkama privatnosti. Analitika može raditi izravno ili preko našeg Cloudflare poslužitelja i koristi vlastiti analitički identifikator. Bilježi posjete i interakcije sa sekcijama, ali ne šalje Fingerprint Visitor ID ni rezultate testova.</p>
+<p>GA4 je neobvezan i uključuje se samo uz zasebnu privolu. Odluka vrijedi za stranice laboratorija, pamti se lokalno u pregledniku i može se promijeniti gumbom „Postavke privatnosti”. Odbijanje ili povlačenje privole isključuje daljnje slanje analitike; povlačenje ne utječe na raniju obradu koja se temeljila na privoli.</p>
+<p>Analitika bilježi posjete, pregledane stranice, pregled sekcija i ograničene interakcije. Koristi vlastite analitičke identifikatore i može se slati izravno ili preko Cloudflare poslužitelja. U GA4 se ne šalju Fingerprint Pro Visitor ID, sirovi rezultati testova ni pristupni tokeni. Oglašivački signali isključeni su. Pravna osnova analitike je privola (članak 6. stavak 1. točka (a) GDPR-a).</p>
 
-<h2>Tracking simulator</h2>
-<p>Demonstracijski događaji ostaju u pregledniku. Simulirani Tracking ID pohranjuje se u kolačić i lokalnu pohranu do 30 dana, a može se resetirati.</p>
-<p>Automatska provjera komunikacije koristi zaseban sesijski kolačić i kratkotrajni zapis u Cloudflare bazi. Zapis se briše po dovršetku provjere; prekinuti test može ostaviti zapis.</p>
+<h2>Tracking simulator i lokalna pohrana</h2>
+<p>Simulator se pokreće samo na zahtjev korisnika. Demonstracijski događaji i profil ostaju u pregledniku tijekom korištenja kartice. Simulirani Tracking ID i vrijeme njegova isteka spremaju se u kolačiće i lokalnu pohranu preglednika radi prikaza ponovnog posjeta. Identifikator vrijedi najviše 30 dana od stvaranja: kolačići istječu, a istekli zapis iz lokalne pohrane briše se pri sljedećem pokretanju simulatora. Identitet se može odmah resetirati gumbom u simulatoru.</p>
+<p>Provjera komunikacije nakon pokretanja koristi zasebnu oznaku sesije i kratki zapis u Cloudflare bazi. Zapis se u normalnom tijeku briše nakon provjere; prekinuta provjera može ostaviti zapis do naknadnog čišćenja. Taj zapis ne sadrži Fingerprint Visitor ID ni rezultate testova.</p>
 
-<h2>Vanjske usluge i kontakt</h2>
-<p>Cloudflare, Fingerprint i Google zasebno obrađuju podatke u okviru svojih usluga i pravila privatnosti.</p>
-<p>Za pitanja o privatnosti: <a href="mailto:31tidytgv@mozmail.com">31tidytgv@mozmail.com</a>.</p>
+<h2>Primatelji, prijenosi i čuvanje</h2>
+<p>U okviru navedenih funkcija podatke mogu obrađivati Cloudflare, Fingerprint i Google. Njihove usluge mogu uključivati obradu ili prijenos podataka izvan Europskog gospodarskog prostora, ovisno o usluzi i ugovorenim zaštitnim mjerama. Dodatne informacije: <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a>, <a href="https://fingerprint.com/privacy-policy/">Fingerprint</a> i <a href="https://policies.google.com/privacy?hl=hr">Google</a>.</p>
+<p>Trajanje lokalnog Tracking ID-a navedeno je iznad. Rokovi čuvanja u GA4, Fingerprint Pro i Cloudflare sustavima ovise o postavkama korištenih usluga i pravilima pružatelja. Za podatke i konkretne rokove povezane s ovim projektom možeš se obratiti na navedeni kontakt.</p>
+
+<h2>Tvoja prava</h2>
+<p>Ovisno o vrsti obrade, imaš pravo zatražiti pristup, ispravak, brisanje ili ograničenje obrade osobnih podataka, podnijeti prigovor i zatražiti prenosivost kada su za to ispunjeni uvjeti. Privolu možeš povući u bilo kojem trenutku. Zahtjev možeš poslati na gore navedenu adresu. Imaš i pravo podnijeti pritužbu <a href="https://azop.hr/">Agenciji za zaštitu osobnih podataka (AZOP)</a>.</p>
+<p>Ni analitika ni identifikacijski testovi nisu obvezni za čitanje stranice; za dobrovoljno pokretanje pojedinog testa potrebna je odgovarajuća korisnička radnja.</p>
+
 <p><a href="/">Povratak na glavni test</a></p>
 </main>
 </body>

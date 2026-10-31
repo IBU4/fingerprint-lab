@@ -119,10 +119,21 @@
     window["ga-disable-" + GA_ID] = false;
     window.gtag("consent", "update", signal(true));
     window.gtag("js", new Date());
-    window.gtag("config", GA_ID, {
+    const config = {
       allow_google_signals: false,
       allow_ad_personalization_signals: false
-    });
+    };
+    // A prior opt-in MP session can identify the same browser when the tag
+    // is enabled for the first time. Never overwrite an existing GA cookie.
+    if (!getCookie("_ga")) {
+      try {
+        const previousId = localStorage.getItem(MP_CLIENT_KEY);
+        if (previousId && /^\d{1,10}\.\d{1,10}$/.test(previousId)) {
+          config.client_id = previousId;
+        }
+      } catch {}
+    }
+    window.gtag("config", GA_ID, config);
     log("Privola GA4: DA.");
     log("Config i automatski page_view dodani u dataLayer (ne potvrđuje slanje).");
     const status = el("gaStatus");
@@ -159,7 +170,13 @@
     // Where available, reuse the same identifier GA4 assigned through gtag.
     const ga = getCookie("_ga");
     const match = ga.match(/^GA\d+\.\d+\.(\d{1,10}\.\d{1,10})$/);
-    if (match) return match[1];
+    if (match) {
+      // Keep MP and the native Google tag on one identity even if the
+      // native cookie later becomes unavailable.
+      mpClientMemory = match[1];
+      try { localStorage.setItem(MP_CLIENT_KEY, mpClientMemory); } catch {}
+      return mpClientMemory;
+    }
     if (mpClientMemory) return mpClientMemory;
     try {
       const stored = localStorage.getItem(MP_CLIENT_KEY);
@@ -352,6 +369,8 @@
       } catch {}
       mpClientMemory = "";
       mpSessionMemory = null;
+      mpPageSent = false;
+      mpLastEventAt = performance.now();
       log("Privola GA4: NE. Analitika isključena.");
     }
     document.dispatchEvent(new CustomEvent("fingerprintlab:ga-consent", {

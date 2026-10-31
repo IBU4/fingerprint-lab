@@ -396,8 +396,8 @@
       ".ga4-dialog-actions{display:flex;gap:10px;flex-wrap:wrap}" +
       ".ga4-dialog-actions button{flex:1;min-width:130px;min-height:45px;border-radius:9px;" +
       "padding:10px 12px;font:600 15px system-ui;cursor:pointer}" +
-      ".ga4-accept{background:#78e4d4;border:1px solid #78e4d4;color:#10272b}" +
-      ".ga4-decline,.ga4-close{background:#22364a;border:1px solid #547486;color:#eaf1f8}" +
+      ".ga4-accept,.ga4-decline{background:#22364a;border:1px solid #7eb6df;color:#eaf1f8}" +
+      ".ga4-close{background:#22364a;border:1px solid #547486;color:#eaf1f8}" +
       ".ga4-consent-footer{margin:24px 0 0;font:13px/1.5 system-ui,sans-serif}" +
       ".ga4-preferences{padding:0;background:none;border:0;text-decoration:underline;" +
       "text-underline-offset:3px;color:#8be7da;cursor:pointer;font:inherit}" +

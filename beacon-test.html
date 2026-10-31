@@ -48,7 +48,7 @@ button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;backg
 <p>Ako <strong>fetch stigne</strong>, a <strong>Beacon ne stigne</strong>, postoji sumnja na blokiranje Beacon zahtjeva. Ponovi test s NoScript <code>ping</code> isključenim pa uključenim, bez drugih promjena.</p>
 <p>Povratna vrijednost <code>sendBeacon() = true</code> znači samo da je preglednik stavio zahtjev u red, ne da je poslužitelj primio podatke. Neprimitak nije sam po sebi konačan dokaz blokiranja.</p>
 <p>Ovo je <strong>first-party</strong> test. Njegov rezultat ne dokazuje što se događa sa zahtjevima prema domeni Google Analyticsa.</p>
-<p>Test šalje samo slučajne kratkotrajne oznake, ne koristi GA4, Fingerprint Pro, kolačiće ni trajnu pohranu rezultata. Privremena potvrda na Cloudflare rubnom poslužitelju istječe ubrzo nakon testa. Standardna infrastruktura hostinga i dalje obrađuje HTTP zahtjeve.</p>
+<p>Test ne zahtijeva registraciju i ne pohranjuje trajne rezultate. Standardna evidencija posjeta stranici može se zasebno obrađivati.</p>
 </section>
 </main>
 </body>

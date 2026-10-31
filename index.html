@@ -141,7 +141,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <h2 id="custom-tracking">05 / 1P Custom Tracking Simulator</h2>
 <p>Interaktivni prikaz načina na koji web-praćenje može povezivati aktivnosti i posjete.</p>
 <p><a href="/tracking-simulator.html" style="font-weight:700">Otvori 1P Custom Tracking Simulator →</a></p>
-<p class="muted">Demonstracijski podaci ostaju u pregledniku. Lokalni identifikator može se resetirati. Hosting može zasebno obrađivati zahtjeve za stranicu.</p>
+<p class="muted">Demonstracijski podaci ostaju u pregledniku. Identifikator se može resetirati.</p>
 </section>
 
 <section class="box info-section" aria-labelledby="fingerprintjs-raw">
@@ -153,7 +153,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 
 <section class="box info-section" aria-labelledby="about-lab">
 <h2 id="about-lab">07 / O ovom laboratoriju</h2>
-<p><strong>Fingerprint Lab</strong> je neovisna, javno dostupna demonstracijska stranica za istraživanje identifikacije preglednika i web-praćenja. Nije internetska trgovina, oglasna mreža ni službeni proizvod tvrtki čije tehnologije testira.</p>
+<p><strong>Fingerprint Lab</strong> je osobni, nekomercijalni istraživački projekt. Nije oglašavan niti namijenjen indeksiranju u tražilicama. Nije povezan s pružateljima usluga koje testira.</p>
 <p>Test identifikacije pokreće se dobrovoljno, uz izbor načina <strong>Direct</strong> ili <strong>1P Proxy</strong>. Rezultati omogućuju usporedbu reakcija različitih preglednika i njihovih zaštita.</p>
 <p class="note"><strong>Važno:</strong> Fingerprint test pokreće se samo nakon potvrde i pritiska gumba. Google Analytics 4 zahtijeva zasebnu privolu. Pružatelj hostinga može obrađivati tehničke podatke o posjetu već pri otvaranju stranice, neovisno o testu.</p>
 
@@ -173,12 +173,12 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 
 <h3>Što su Fingerprint Pro, Google Analytics i Cloudflare?</h3>
 <p><strong><a href="https://fingerprint.com/" target="_blank" rel="noopener noreferrer">Fingerprint Pro</a></strong> je komercijalna usluga za identifikaciju preglednika i otkrivanje sumnjivih aktivnosti. Ovdje se koristi za dobrovoljni test. <strong>Direct</strong> je izravan pristup, a <strong>1P Proxy</strong> koristi put preko ove stranice. Nijedan način sam po sebi ne uklanja fingerprinting.</p>
-<p><strong><a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">Google Analytics 4 (GA4)</a></strong> Googleova je platforma za analitiku posjeta i događaja. Ovaj laboratorij koristi GA4 uz zasebnu privolu kako bi se moglo provjeriti registrira li analitika posjet iz određenog preglednika. Ugrađena dijagnostika pokazuje učitavanje i inicijalizaciju taga, ali sama ne dokazuje da je Google primio događaj.</p>
-<p><strong><a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a></strong> pruža infrastrukturu na kojoj je ova stranica objavljena. Hosting i poslužiteljska analitika mogu obrađivati podatke o posjetima neovisno o klijentskim skriptama. Takva evidencija sama po sebi ne znači da je korisnik prepoznat kroz različite sesije.</p>
+<p><strong><a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">Google Analytics 4 (GA4)</a></strong> služi za dobrovoljnu analitiku posjeta i interakcija. Uključuje se samo uz zasebnu privolu.</p>
+<p><strong><a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a></strong> pruža hosting i osnovnu statistiku rada stranice.</p>
 
 <h3>Što su adblockeri?</h3>
 <p><em>Adblockeri</em> su alati koji ograničavaju oglase, trackere ili neželjene dijelove web-stranica. Neki blokiraju mrežne zahtjeve prema poznatim domenama; drugi uklanjaju ili mijenjaju HTML elemente i skripte prije izvršavanja. Pojedini preglednici imaju i vlastitu zaštitu od praćenja, a proširenja poput <a href="https://github.com/gorhill/uBlock" target="_blank" rel="noopener noreferrer">uBlock Origina</a> ili <a href="https://noscript.net/" target="_blank" rel="noopener noreferrer">NoScripta</a> nude dodatne kontrole.</p>
-<p>Blokiranje oglasa, blokiranje trackera i sprječavanje fingerprintinga nisu isto. Preglednik može zaustaviti Google Analytics, a ipak dopustiti Fingerprint Pro preko proxyja. Može blokirati oba JavaScript servisa, dok poslužitelj i dalje prima osnovni HTTP zahtjev. Upravo te razlike laboratorij omogućuje uspoređivati.</p>
+<p>Blokiranje oglasa, praćenja i fingerprintinga nisu isto. Zaštite preglednika mogu različito utjecati na rezultate testova.</p>
 
 <h3>Kako tumačiti rezultate?</h3>
 <p>Testiraj svaki preglednik pod istim uvjetima, zabilježi je li odabran Direct ili 1P Proxy te provjeri GA4 dijagnostiku. <strong>Uspješno učitavanje skripte nije isto što i uspješno praćenje korisnika</strong>, a jedan neuspješan test nije dokaz trajne zaštite. Za pouzdan zaključak potrebna su ponovljena mjerenja i razlikovanje onoga što je stvarno opaženo od pretpostavki.</p>

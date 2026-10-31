@@ -160,7 +160,7 @@ pre{
   <div>
     <h1>Tracking simulator</h1>
     <div class="subtitle">
-      Interaktivna demonstracija 1P (first-party) praćenja: prikazuje podatke iz preglednika i korisničkih interakcija. Demonstracijski događaji i profil ne šalju se analitičkom servisu niti se pohranjuju na poslužitelju. Cloudflare infrastruktura i middleware laboratorija mogu zasebno evidentirati HTTP zahtjeve.
+      Interaktivna demonstracija praćenja u pregledniku. Demonstracijski događaji i profil ostaju lokalni. Standardni posjeti stranici mogu biti zabilježeni u evidenciji pružatelja hostinga.
     </div>
   </div>
   <div class="badges">
@@ -312,7 +312,7 @@ pre{
 </details>
 
 <div class="note">
-  Simulator koristi biblioteku <code>lab-engine.js</code> (FingerprintJS OSS). Demonstracijski događaji i profil ostaju u memoriji ove kartice; Tracking ID se sprema u kolačić i localStorage preglednika radi demonstracije ponovnog posjeta. HTTP zahtjevi za stranicu i biblioteku mogu biti zabilježeni poslužiteljski.
+  Demonstracijski događaji i profil ostaju u pregledniku. Identifikator ponovnog posjeta može se resetirati i istječe nakon 30 dana.
 </div>
 </main>
 

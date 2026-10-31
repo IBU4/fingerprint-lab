@@ -76,8 +76,8 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <section class="box">
 <h2>01 / Pokretanje testa</h2>
 <div class="mode-choice" role="group" aria-label="Način identifikacije">
-  <label><input type="radio" name="mode" value="direct" checked><span><strong>Direct</strong><br>Izravan pristup</span></label>
-  <label><input type="radio" name="mode" value="proxy"><span><strong>1P Proxy</strong><br>Preko ove stranice</span></label>
+  <label><input type="radio" name="mode" value="direct"><span><strong>Direct</strong><br>Izravan pristup</span></label>
+  <label><input type="radio" name="mode" value="proxy" checked><span><strong>1P Proxy</strong><br>Preko ove stranice</span></label>
 </div>
 <p class="muted" id="modeInfo">Izravna identifikacija putem servisa Fingerprint.</p>
 <p class="muted">Test obrađuje servis Fingerprint, a rezultat može biti dostupan vlasniku laboratorija. GA4 se učitava samo uz zasebnu privolu. Hosting i web-analitika mogu bilježiti podatke o posjetu. Prikaz rezultata na ovoj stranici traje samo tijekom otvorene sesije.</p>
@@ -206,7 +206,7 @@ const modes = {
     description: "Identifikacija preko ove stranice."
   }
 };
-let mode = new URLSearchParams(location.search).get("mode") === "proxy" ? "proxy" : "direct";
+let mode = new URLSearchParams(location.search).get("mode") === "direct" ? "direct" : "proxy";
 let busy = false;
 const agents = { direct: null, proxy: null };
 const latest = { direct: null, proxy: null };

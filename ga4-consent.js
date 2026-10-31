@@ -8,8 +8,9 @@
   const MODE_KEY = "fingerprint_lab_ga4_mode_v1";
   const MP_CLIENT_KEY = "fingerprint_lab_ga4_mp_client_v1";
   const MP_SESSION_KEY = "fingerprint_lab_ga4_mp_session_v1";
-  let mode = "tag";
-  try { if (localStorage.getItem(MODE_KEY) === "mp") mode = "mp"; } catch {}
+  // Default to the server-side MP channel; retain any explicitly saved tag choice.
+  let mode = "mp";
+  try { if (localStorage.getItem(MODE_KEY) === "tag") mode = "tag"; } catch {}
   let mpClientMemory = "";
   let mpSessionMemory = null;
   let mpPageSent = false;

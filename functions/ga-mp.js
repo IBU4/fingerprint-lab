@@ -101,8 +101,12 @@ export async function onRequestPost({ request, env }) {
     events: [{ name: event, params: output }]
   };
   const country = request.cf?.country;
-  if (typeof country === "string" && /^[A-Z]{2}$/.test(country)) {
+  if (typeof country === "string" && /^[A-Z]{2}$/.test(country) && country !== "XX") {
     payload.user_location = { country_id: country };
+  } else {
+    // T1 (Tor), XX (unknown), or missing country: let GA4 geolocate the exit IP.
+    const clientIp = request.headers.get("cf-connecting-ip");
+    if (clientIp) payload.ip_override = clientIp;
   }
   // GA4 supports user_agent as an alternative to the optional structured device object.
   // Do not send an incomplete device object: strict validation requires device.model.

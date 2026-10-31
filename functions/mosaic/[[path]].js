@@ -47,12 +47,18 @@ export async function onRequest({ request }) {
   if (clientIp) headers.set("X-Forwarded-For", clientIp);
 
   const geo = request.cf || {};
-  if (geo.country) headers.set("X-Forwarded-Country", geo.country);
-  if (geo.regionCode) headers.set("X-Forwarded-Region", geo.regionCode);
-  if (geo.latitude != null && geo.longitude != null) {
-    const coordinates = "latlong=" + geo.latitude + "," + geo.longitude;
-    const city = geo.city ? ";city=" + geo.city : "";
-    headers.set("X-Forwarded-Geolocation", coordinates + city);
+  // Cloudflare marks Tor as T1 and unknown locations as XX, neither is an ISO country.
+  // Do not pass their geographic metadata to Google; retain the real client IP above.
+  const validCountry = typeof geo.country === "string" &&
+    /^[A-Z]{2}$/.test(geo.country) && geo.country !== "XX";
+  if (validCountry) {
+    headers.set("X-Forwarded-Country", geo.country);
+    if (geo.regionCode) headers.set("X-Forwarded-Region", geo.regionCode);
+    if (geo.latitude != null && geo.longitude != null) {
+      const coordinates = "latlong=" + geo.latitude + "," + geo.longitude;
+      const city = geo.city ? ";city=" + geo.city : "";
+      headers.set("X-Forwarded-Geolocation", coordinates + city);
+    }
   }
 
   try {

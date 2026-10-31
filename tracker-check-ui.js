@@ -58,7 +58,7 @@
         status.style.color = received ? "#85edbd" : "#ffb86c";
       } catch (error) {
         if (current !== state) return;
-        status.textContent = "Provjera trackera nije dostupna (D1 ili komunikacija).";
+        status.textContent = "Provjera trackera trenutačno nije dostupna.";
         status.style.color = "#ffb86c";
       } finally {
         state.busy = false;

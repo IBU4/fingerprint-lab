@@ -320,7 +320,10 @@ pre{
 <script>
 (() => {
   const STORAGE_KEY = "tracking_demo_id";
+  const STORAGE_EXPIRES_KEY = "tracking_demo_expires_at";
   const COOKIE_NAME = "tracking_demo_id";
+  const COOKIE_EXPIRES_NAME = "tracking_demo_expires_at";
+  const ID_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
   const session = {
     startedAt: null,
     events: [],
@@ -359,38 +362,73 @@ pre{
     return null;
   }
 
-  function setCookie(name, value) {
+  function setCookie(name, value, maxAgeSeconds) {
     try {
-      document.cookie = name + "=" + encodeURIComponent(value) + "; Max-Age=2592000; Path=/; SameSite=Lax";
+      document.cookie = name + "=" + encodeURIComponent(value) +
+        "; Max-Age=" + maxAgeSeconds + "; Path=/; SameSite=Lax";
       return getCookie(name) === value;
     } catch {
       return false;
     }
   }
 
+  function clearStoredTrackingId() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_EXPIRES_KEY);
+    } catch {}
+    try {
+      for (const name of [COOKIE_NAME, COOKIE_EXPIRES_NAME]) {
+        document.cookie = name + "=; Max-Age=0; Path=/; SameSite=Lax";
+      }
+    } catch {}
+  }
+
   function getOrCreateTrackingId() {
+    const now = Date.now();
     let id = null;
+    let expiresAt = 0;
     let localStorageStatus = "nedostupan";
     let cookieStatus = "nedostupan";
 
+    // Check the original creation deadline. Returning visitors must not extend it.
     try {
-      id = localStorage.getItem(STORAGE_KEY);
-      if (id) localStorageStatus = "postojeći ID";
-    } catch {}
+      expiresAt = Number(localStorage.getItem(STORAGE_EXPIRES_KEY) ||
+        getCookie(COOKIE_EXPIRES_NAME));
+    } catch {
+      expiresAt = Number(getCookie(COOKIE_EXPIRES_NAME));
+    }
 
-    const cookieId = getCookie(COOKIE_NAME);
-    if (!id && cookieId) id = cookieId;
+    if (Number.isSafeInteger(expiresAt) && expiresAt > now &&
+        expiresAt <= now + ID_LIFETIME_MS) {
+      try {
+        id = localStorage.getItem(STORAGE_KEY);
+        if (id) localStorageStatus = "postojeći ID";
+      } catch {}
+      if (!id) id = getCookie(COOKIE_NAME);
+    } else {
+      // Legacy IDs have no creation time; reset once instead of retaining indefinitely.
+      clearStoredTrackingId();
+    }
 
-    if (!id) id = randomId();
+    if (!id) {
+      id = randomId();
+      expiresAt = now + ID_LIFETIME_MS;
+    }
+    const remainingSeconds = Math.max(1,
+      Math.min(2592000, Math.ceil((expiresAt - now) / 1000)));
 
     try {
       localStorage.setItem(STORAGE_KEY, id);
+      localStorage.setItem(STORAGE_EXPIRES_KEY, String(expiresAt));
       localStorageStatus = "ID spremljen";
     } catch {
       localStorageStatus = "blokirano";
     }
 
-    cookieStatus = setCookie(COOKIE_NAME, id) ? "ID spremljen" : "blokirano / file://";
+    const savedId = setCookie(COOKIE_NAME, id, remainingSeconds);
+    const savedExpiry = setCookie(COOKIE_EXPIRES_NAME, String(expiresAt), remainingSeconds);
+    cookieStatus = savedId && savedExpiry ? "ID spremljen" : "blokirano / file://";
 
     session.identifiers.trackingId = id;
     session.identifiers.localStorage = localStorageStatus;
@@ -592,10 +630,7 @@ pre{
   }
 
   function resetIdentity() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    try {
-      document.cookie = COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Lax";
-    } catch {}
+    clearStoredTrackingId();
     session.identifiers = {};
     $("trackingId").textContent = "resetiran";
     $("fpId").textContent = "nije dostupan / nije učitan";

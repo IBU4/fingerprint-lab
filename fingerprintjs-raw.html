@@ -211,7 +211,7 @@ async function runTest(){
   $("runBtn").disabled=true;
   $("status").textContent="FingerprintJS prikuplja dostupne browser signale…";
   try{
-    if(typeof FingerprintJS==="undefined") throw new Error("FingerprintJS nije učitan. Provjeri /rawdata.min.js.");
+    if(typeof FingerprintJS==="undefined") throw new Error("Test nije dostupan. Pokušaj ponovno.");
     const t0=performance.now();
     if(!fpAgent) fpAgent=await FingerprintJS.load();
     const result=await fpAgent.get();

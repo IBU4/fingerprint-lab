@@ -295,7 +295,7 @@ pre{
   <div class="fake-card">Dno demo sadržaja — dolazak ovdje generira visoki engagement signal.</div>
 </div>
 
-<details>
+<details id="trackingRawDetails">
   <summary>Raw tracking session JSON</summary>
   <pre id="rawJson">{}</pre>
 </details>
@@ -587,6 +587,8 @@ pre{
 
   function start() {
     if (running) return;
+    // Only the action name is sent; simulator IDs and JSON stay local.
+    window.FingerprintLabGA4?.sendEvent?.("tracker_start");
     running = true;
     $("startBtn").disabled = true;
     startPerf = performance.now();
@@ -641,6 +643,11 @@ pre{
   }
 
   $("startBtn").addEventListener("click", start);
+  $("trackingRawDetails").addEventListener("toggle", event => {
+    if (event.currentTarget.open) {
+      window.FingerprintLabGA4?.sendEvent?.("json_view", { action_origin: "tracking_simulator" });
+    }
+  });
   $("pauseBtn").addEventListener("click", pause);
   $("clearBtn").addEventListener("click", clearEvents);
   $("resetBtn").addEventListener("click", resetIdentity);

@@ -143,7 +143,7 @@
 
     const script = document.createElement("script");
     script.async = true;
-    script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA_ID);
+    script.src = TAG_URL;
     script.onload = () => {
       tagLoaded = true;
       if (choice !== "granted") return;

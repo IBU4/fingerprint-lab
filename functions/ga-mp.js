@@ -1,7 +1,14 @@
 // First-party GA4 Measurement Protocol experiment (web stream, EU endpoint).
 // API secret never leaves the Cloudflare server. Explicit opt-in only.
 const STREAM = "G-F6JRRE08DC";
-const ALLOWED = new Set(["page_view", "section_view", "section_engagement", "section_interaction", "mp_test_event"]);
+// Explicit action event names make user journeys readable in GA4 Path Exploration.
+const ACTION_EVENTS = new Set([
+  "fp_select_direct", "fp_select_proxy", "ga4_mode_change", "fp_test_run",
+  "tracker_start", "fingerprintjs_run", "fp_server_fetch",
+  "json_view", "json_copy", "json_save", "vid_copy"
+]);
+const JSON_ORIGINS = new Set(["fingerprint_pro", "server_lab", "tracking_simulator", "fingerprintjs_oss"]);
+const ALLOWED = new Set(["page_view", "section_view", "section_engagement", "section_interaction", "mp_test_event", ...ACTION_EVENTS]);
 // Cloudflare Pages serves HTML files using extensionless canonical paths.
 const PAGES = new Set([
   "/", "/index", "/index.html",
@@ -70,6 +77,35 @@ export async function onRequestPost({ request, env }) {
     output.test_source = "fingerprint_lab";
     // Show only diagnostic tests in GA4 DebugView, not production analytics events.
     output.debug_mode = true;
+  } else if (ACTION_EVENTS.has(event)) {
+    // Accept only predefined action metadata. Never forward identifiers, tokens or JSON.
+    if (typeof params.section_id === "string") {
+      if (!SECTIONS.has(params.section_id)) return json({ ok: false, error: "invalid_section" }, 400);
+      output.section_id = params.section_id;
+    }
+    if (event === "ga4_mode_change") {
+      if (!["tag", "mp"].includes(params.ga4_channel)) {
+        return json({ ok: false, error: "invalid_ga4_channel" }, 400);
+      }
+      output.ga4_channel = params.ga4_channel;
+    }
+    if (event === "fingerprintjs_run") {
+      if (!["start", "rerun"].includes(params.test_action)) {
+        return json({ ok: false, error: "invalid_test_action" }, 400);
+      }
+      output.test_action = params.test_action;
+    }
+    if (["json_view", "json_copy", "json_save"].includes(event)) {
+      if (!JSON_ORIGINS.has(params.action_origin)) {
+        return json({ ok: false, error: "invalid_action_origin" }, 400);
+      }
+      output.action_origin = params.action_origin;
+    }
+    if (typeof params.experiment_scenario === "string" &&
+        ["casual", "researcher", "proxy", "documentation"].includes(params.experiment_scenario)) {
+      output.experiment_scenario = params.experiment_scenario;
+    }
+    if (params.debug_mode === true) output.debug_mode = true;
   } else {
     if (!SECTIONS.has(params.section_id)) {
       return json({ ok: false, error: "invalid_section" }, 400);

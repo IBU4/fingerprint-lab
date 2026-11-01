@@ -31,8 +31,7 @@ export async function onRequest(context) {
           cf.country || "unknown",
           String(cf.asn || ""),
           browser,
-          request.headers.get("sec-fetch-mode") || "unknown",
-          request.headers.get("CF-Connecting-IP") || "unknown" // blob8: client IP / Tor exit
+          request.headers.get("sec-fetch-mode") || "unknown"
         ],
         doubles: [Date.now() - started]
       });

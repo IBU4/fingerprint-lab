@@ -254,11 +254,30 @@ function saveJson(){
   $("status").textContent="Raw JSON spremljen lokalno.";
 }
 
-$("runBtn").addEventListener("click",runTest);
-$("rerunBtn").addEventListener("click",runTest);
-$("copyBtn").addEventListener("click",copyJson);
-$("copyRawBtn").addEventListener("click",copyJson);
-$("saveBtn").addEventListener("click",saveJson);
+// Named GA4 actions use the existing consent-aware sender; no result data is transmitted.
+function trackAction(name, params) {
+  window.FingerprintLabGA4?.sendEvent?.(name, params);
+}
+$("runBtn").addEventListener("click", () => {
+  trackAction("fingerprintjs_run", { test_action: "start" });
+  runTest();
+});
+$("rerunBtn").addEventListener("click", () => {
+  trackAction("fingerprintjs_run", { test_action: "rerun" });
+  runTest();
+});
+$("copyBtn").addEventListener("click", () => {
+  trackAction("json_copy", { action_origin: "fingerprintjs_oss" });
+  copyJson();
+});
+$("copyRawBtn").addEventListener("click", () => {
+  trackAction("json_copy", { action_origin: "fingerprintjs_oss" });
+  copyJson();
+});
+$("saveBtn").addEventListener("click", () => {
+  trackAction("json_save", { action_origin: "fingerprintjs_oss" });
+  saveJson();
+});
 $("filter").addEventListener("input",applyFilter);
 renderContext();
 </script>

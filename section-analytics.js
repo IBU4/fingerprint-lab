@@ -129,14 +129,15 @@
     lastSample = performance.now();
   });
 
+  // One named event per important button; retain section_interaction for diagnostics/links.
   const clicks = {
-    run: ["identification", "run_test"],
-    gaCheck: ["identification", "check_ga4_tag"],
-    copy: ["results", "copy_vid"],
-    save: ["results", "export_json"],
-    serverLabRun: ["server_lab_and_response", "fetch_event"],
-    serverLabCopy: ["server_lab_and_response", "copy_event_json"],
-    serverLabSave: ["server_lab_and_response", "export_event_json"]
+    run: ["fp_test_run", { section_id: "identification" }],
+    gaCheck: ["section_interaction", { section_id: "identification", section_action: "check_ga4_tag" }],
+    copy: ["vid_copy", { section_id: "results" }],
+    save: ["json_save", { section_id: "results", action_origin: "fingerprint_pro" }],
+    serverLabRun: ["fp_server_fetch", { section_id: "server_lab_and_response" }],
+    serverLabCopy: ["json_copy", { section_id: "server_lab_and_response", action_origin: "server_lab" }],
+    serverLabSave: ["json_save", { section_id: "server_lab_and_response", action_origin: "server_lab" }]
   };
 
   document.querySelector("main")?.addEventListener("click", event => {
@@ -144,8 +145,8 @@
     if (!enabled || !permitted() || !(target instanceof Element)) return;
     const button = target.closest("button");
     if (button && !button.disabled && clicks[button.id]) {
-      const [section_id, section_action] = clicks[button.id];
-      emit("section_interaction", { section_id, section_action });
+      const [eventName, params] = clicks[button.id];
+      emit(eventName, params);
       return;
     }
     const anchor = target.closest("a[href]");
@@ -168,13 +169,31 @@
   document.querySelectorAll('input[name="mode"]').forEach(radio => {
     radio.addEventListener("change", () => {
       if (radio.checked && ["direct", "proxy"].includes(radio.value)) {
-        emit("section_interaction", {
-          section_id: "identification",
-          section_action: "select_" + radio.value
-        });
+        emit("fp_select_" + radio.value, { section_id: "identification" });
       }
     });
   });
+  // The GA4 channel selector reloads the page. Queue its action in this tab,
+  // then report after reload using the newly selected channel. Consent logic is unchanged.
+  const MODE_EVENT_KEY = "fingerprint_lab_ga4_mode_event_pending_v1";
+  const channelSelect = document.getElementById("gaMode");
+  channelSelect?.addEventListener("change", () => {
+    const next = channelSelect.value;
+    if (!permitted() || !["mp", "tag"].includes(next) ||
+        next === window.FingerprintLabGA4.getMode()) return;
+    try { sessionStorage.setItem(MODE_EVENT_KEY, next); } catch {}
+  });
+  document.addEventListener("DOMContentLoaded", () => {
+    let pending = null;
+    try {
+      pending = sessionStorage.getItem(MODE_EVENT_KEY);
+      sessionStorage.removeItem(MODE_EVENT_KEY);
+    } catch {}
+    if (permitted() && pending === window.FingerprintLabGA4.getMode()) {
+      emit("ga4_mode_change", { ga4_channel: pending });
+    }
+  }, { once: true });
+
   document.getElementById("gaDiagnostics")?.addEventListener("toggle", event => {
     if (event.currentTarget.open) {
       emit("section_interaction", {

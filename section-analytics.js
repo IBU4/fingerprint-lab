@@ -164,7 +164,7 @@
       emit("section_interaction", { section_id: "documentation",
         section_action: "open_reference" });
     }
-  });
+  }, true); // Capture clicks before target handlers disable Run / Server Lab buttons.
 
   document.querySelectorAll('input[name="mode"]').forEach(radio => {
     radio.addEventListener("change", () => {

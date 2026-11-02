@@ -382,6 +382,20 @@
     if (previous === "granted" && next === "denied" && started) location.reload();
   }
 
+  // Revocation in one tab must also stop analytics in other open tabs.
+  function syncRevokedConsent() {
+    if (choice !== "granted") return;
+    try {
+      if (localStorage.getItem(KEY) === "denied") decide("denied");
+    } catch {}
+  }
+
+  window.addEventListener("storage", event => {
+    if (event.key === KEY && event.newValue === "denied") syncRevokedConsent();
+  });
+  // Recheck after restoring a suspended/background tab.
+  window.addEventListener("pageshow", syncRevokedConsent);
+
   function openPreferences() {
     const dialog = el("ga4ConsentDialog");
     if (!dialog) return;

@@ -118,7 +118,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 </section>
 <section class="box wide">
 <h2>03 / Server Lab</h2>
-<p class="muted">Dohvat podataka o postojećem događaju. Ne pokreće novo mjerenje niti mijenja rezultate testova.</p>
+<p class="muted">Ručni dohvat događaja uključuje Smart Signals i serversku anti-fraud evaluaciju. Ako Event ID odgovara trenutačno prikazanom mjerenju, oznaka uz Suspect Score ažurira se prema odluci Rules Enginea (OK, CAPTCHA ili BLOCK 403), čak i ako je sam score nizak. Dohvat ne pokreće novo mjerenje i ne mijenja izvorne rezultate; stariji događaji ostaju dostupni za pregled.</p>
 <label class="field" for="serverLabEvent"><span>Event ID — automatski ili ručni unos</span></label>
 <input id="serverLabEvent" type="text" spellcheck="false" autocomplete="off" placeholder="event_id">
 <label class="field" for="serverLabToken"><span>Token</span></label>
@@ -227,12 +227,17 @@ function getField(data, ...keys) {
   }
   return null;
 }
-function showScore(value) {
+function showScore(value, serverDecision = null) {
   const el = $("score");
   const score = value === null || value === undefined || value === "" ? NaN : Number(value);
   el.className = "score";
   if (!Number.isFinite(score) || score < 0) {
     el.textContent = "—";
+    return;
+  }
+  if (serverDecision) {
+    el.textContent = score + " — " + serverDecision.label;
+    el.classList.add(serverDecision.className);
     return;
   }
   if (score <= 20) {
@@ -246,6 +251,19 @@ function showScore(value) {
     el.classList.add("score-block");
   }
 }
+// Only update the visible measurement when the manually fetched Server Event matches.
+window.addEventListener("fingerprint-lab:ruleset-evaluated", ({ detail }) => {
+  const record = latest[mode];
+  if (!record || !detail || String(record.event || "") !== detail.eventId ||
+      $("event").textContent.trim() !== detail.eventId) return;
+  const classes = { "OK": "score-ok", "CAPTCHA": "score-captcha", "BLOCK 403": "score-block" };
+  const className = classes[detail.label];
+  if (!className) return;
+  record.serverDecision = { label: detail.label, className };
+  if (typeof detail.score === "number" && Number.isFinite(detail.score) && detail.score >= 0)
+    record.serverScore = detail.score;
+  showScore(record.serverScore ?? record.score, record.serverDecision);
+});
 function ready() {
   $("run").disabled = busy || !$("consent").checked;
   document.querySelectorAll('input[name="mode"]').forEach(r => {
@@ -271,7 +289,7 @@ function showResult() {
   } else {
     show("visitor", record.vid || "(nije vraćen)");
     show("event", record.event);
-    showScore(record.score);
+    showScore(record.serverScore ?? record.score, record.serverDecision);
     show("timing", record.elapsed + " ms · " + record.time);
     $("json").textContent = JSON.stringify(record.data, null, 2);
     $("copy").disabled = !record.vid;

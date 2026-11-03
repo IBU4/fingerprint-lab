@@ -28,31 +28,13 @@
     $("serverLabJson").textContent = "Nema dohvaćenog serverskog odgovora.";
     updateButtons();
   };
-  // Presentation only: the Server API remains authoritative and its raw JSON is unchanged.
-  const showRulesetDecision = payload => {
-    const action = payload?.rule_action;
-    if (!action || typeof action !== "object") return;
-    const type = String(action.type || "").toLowerCase();
-    let label = "";
-    let color = "";
-    if (type === "block") {
-      label = "HIGH RISK";
-      color = "score-block";
-    } else if (type === "allow") {
-      const modifications = action.request_header_modifications || {};
-      const headers = [...(Array.isArray(modifications.set) ? modifications.set : []),
-        ...(Array.isArray(modifications.append) ? modifications.append : [])];
-      const access = headers.find(header => String(header?.name || "").toLowerCase() === "access");
-      const value = String(access?.value || "").toUpperCase();
-      if (value === "CAPTCHA") {
-        label = "CAPTCHA";
-        color = "score-captcha";
-      } else if (value === "OK") {
-        label = "OK";
-        color = "score-ok";
-      }
-    }
-    if (!label) return;
+  // Display score-only risk bands. The raw Server API response is unchanged.
+  const showScoreRisk = payload => {
+    const score = Number(payload?.suspect_score);
+    if (payload?.suspect_score === null || payload?.suspect_score === undefined ||
+        payload?.suspect_score === "" || !Number.isFinite(score) || score < 0) return;
+    const label = score <= 20 ? "OK" : score <= 30 ? "CAPTCHA" : "HIGH RISK";
+    const color = score <= 20 ? "score-ok" : score <= 30 ? "score-captcha" : "score-block";
     $("serverLabRisk").textContent = label;
     $("serverLabRisk").className = "score " + color;
     $("serverLabDecision").hidden = false;
@@ -109,7 +91,7 @@
         return;
       }
       serverResult = payload;
-      showRulesetDecision(payload);
+      showScoreRisk(payload);
       $("serverLabJson").textContent = JSON.stringify(payload, null, 2);
       $("serverLabStatus").textContent = "Server Event dohvaćen. Prikazana su samo polja koja je API vratio.";
     } catch (error) {

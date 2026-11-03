@@ -65,7 +65,10 @@ export async function onRequestPost({ request, env }) {
     return reply({ error: "invalid_event_id", stage: "request" }, 400);
 
   // Requesting an existing event does not trigger browser identification.
-  const endpoint = "https://eu.api.fpjs.io/v4/events/" + encodeURIComponent(eventId);
+  // Read-only evaluation of the Suspect Score ruleset; do not apply allow/block actions here.
+  const rulesetId = "rs_Q0YrHa9wSNrhPy";
+  const endpoint = "https://eu.api.fpjs.io/v4/events/" + encodeURIComponent(eventId)
+    + "?ruleset_id=" + encodeURIComponent(rulesetId);
   let upstream;
   try {
     upstream = await fetch(endpoint, {

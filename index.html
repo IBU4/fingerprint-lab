@@ -129,7 +129,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <button id="serverLabSave" type="button" disabled>Spremi JSON</button>
 </div>
 <p class="muted" id="serverLabStatus" role="status" aria-live="polite">Dohvat još nije pokrenut.</p>
-<div class="field" id="serverLabDecision" hidden aria-live="polite"><span>Ruleset evaluacija</span><strong id="serverLabRisk" class="score">—</strong></div>
+<div class="field" id="serverLabDecision" hidden aria-live="polite"><span>Procjena rizika (Suspect Score)</span><strong id="serverLabRisk" class="score">—</strong></div>
 <pre id="serverLabJson">Nema dohvaćenog serverskog odgovora.</pre>
 <div hidden aria-hidden="true">
 <h2>03 / Usporedba VID-a</h2>
@@ -242,7 +242,7 @@ function showScore(value) {
     el.textContent = score + " — CAPTCHA";
     el.classList.add("score-captcha");
   } else {
-    el.textContent = score + " — BLOCK 403";
+    el.textContent = score + " — HIGH RISK";
     el.classList.add("score-block");
   }
 }

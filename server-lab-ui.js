@@ -39,6 +39,21 @@
     $("serverLabRisk").className = "score " + color;
     $("serverLabDecision").hidden = false;
   };
+  // Map the actual Fingerprint Rules Engine decision to the main score label.
+  // This never applies the action to HTTP traffic.
+  const readRulesetDecision = payload => {
+    const action = payload?.rule_action;
+    if (!action || typeof action !== "object") return null;
+    const type = String(action.type || "").toLowerCase();
+    if (type === "block") return "BLOCK 403";
+    if (type !== "allow") return null;
+    const edits = action.request_header_modifications || {};
+    const headers = [...(Array.isArray(edits.set) ? edits.set : []),
+      ...(Array.isArray(edits.append) ? edits.append : [])];
+    const access = headers.find(header => String(header?.name || "").trim().toLowerCase() === "access");
+    const value = String(access?.value || "").trim().toUpperCase();
+    return value === "CAPTCHA" || value === "OK" ? value : null;
+  };
   const syncAgentEvent = () => {
     const eventId = $("event").textContent.trim();
     if (eventId === lastAgentEvent) return;
@@ -92,6 +107,17 @@
       }
       serverResult = payload;
       showScoreRisk(payload);
+      // Historical lookup stays read-only; only a matching visible event is updated.
+      const label = readRulesetDecision(payload);
+      if (label && payload?.event_id === eventId) {
+        window.dispatchEvent(new CustomEvent("fingerprint-lab:ruleset-evaluated", {
+          detail: {
+            eventId,
+            label,
+            score: typeof payload.suspect_score === "number" ? payload.suspect_score : null
+          }
+        }));
+      }
       $("serverLabJson").textContent = JSON.stringify(payload, null, 2);
       $("serverLabStatus").textContent = "Server Event dohvaćen. Prikazana su samo polja koja je API vratio.";
     } catch (error) {

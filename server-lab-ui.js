@@ -28,17 +28,6 @@
     $("serverLabJson").textContent = "Nema dohvaćenog serverskog odgovora.";
     updateButtons();
   };
-  // Display score-only risk bands. The raw Server API response is unchanged.
-  const showScoreRisk = payload => {
-    const score = Number(payload?.suspect_score);
-    if (payload?.suspect_score === null || payload?.suspect_score === undefined ||
-        payload?.suspect_score === "" || !Number.isFinite(score) || score < 0) return;
-    const label = score <= 20 ? "OK" : score <= 30 ? "CAPTCHA" : "HIGH RISK";
-    const color = score <= 20 ? "score-ok" : score <= 30 ? "score-captcha" : "score-block";
-    $("serverLabRisk").textContent = label;
-    $("serverLabRisk").className = "score " + color;
-    $("serverLabDecision").hidden = false;
-  };
   // Map the actual Fingerprint Rules Engine decision to the main score label.
   // This never applies the action to HTTP traffic.
   const readRulesetDecision = payload => {
@@ -106,9 +95,15 @@
         return;
       }
       serverResult = payload;
-      showScoreRisk(payload);
+      // The server indicator always reflects rule_action, never score-only estimates.
       // Historical lookup stays read-only; only a matching visible event is updated.
       const label = readRulesetDecision(payload);
+      if (label) {
+        const colors = { "OK": "score-ok", "CAPTCHA": "score-captcha", "BLOCK 403": "score-block" };
+        $("serverLabRisk").textContent = label;
+        $("serverLabRisk").className = "score " + colors[label];
+        $("serverLabDecision").hidden = false;
+      }
       if (label && payload?.event_id === eventId) {
         window.dispatchEvent(new CustomEvent("fingerprint-lab:ruleset-evaluated", {
           detail: {

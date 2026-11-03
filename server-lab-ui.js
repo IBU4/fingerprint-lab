@@ -4,7 +4,8 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const ids = ["serverLabEvent", "serverLabToken", "serverLabRun",
-    "serverLabCopy", "serverLabSave", "serverLabStatus", "serverLabJson", "event"];
+    "serverLabCopy", "serverLabSave", "serverLabStatus", "serverLabJson",
+    "serverLabDecision", "serverLabRisk", "event"];
   if (ids.some(id => !$(id))) return;
 
   let running = false;
@@ -21,8 +22,40 @@
   };
   const resetServerResult = () => {
     serverResult = null;
+    $("serverLabDecision").hidden = true;
+    $("serverLabRisk").textContent = "—";
+    $("serverLabRisk").className = "score";
     $("serverLabJson").textContent = "Nema dohvaćenog serverskog odgovora.";
     updateButtons();
+  };
+  // Presentation only: the Server API remains authoritative and its raw JSON is unchanged.
+  const showRulesetDecision = payload => {
+    const action = payload?.rule_action;
+    if (!action || typeof action !== "object") return;
+    const type = String(action.type || "").toLowerCase();
+    let label = "";
+    let color = "";
+    if (type === "block") {
+      label = "HIGH RISK";
+      color = "score-block";
+    } else if (type === "allow") {
+      const modifications = action.request_header_modifications || {};
+      const headers = [...(Array.isArray(modifications.set) ? modifications.set : []),
+        ...(Array.isArray(modifications.append) ? modifications.append : [])];
+      const access = headers.find(header => String(header?.name || "").toLowerCase() === "access");
+      const value = String(access?.value || "").toUpperCase();
+      if (value === "CAPTCHA") {
+        label = "CAPTCHA";
+        color = "score-captcha";
+      } else if (value === "OK") {
+        label = "OK";
+        color = "score-ok";
+      }
+    }
+    if (!label) return;
+    $("serverLabRisk").textContent = label;
+    $("serverLabRisk").className = "score " + color;
+    $("serverLabDecision").hidden = false;
   };
   const syncAgentEvent = () => {
     const eventId = $("event").textContent.trim();
@@ -76,6 +109,7 @@
         return;
       }
       serverResult = payload;
+      showRulesetDecision(payload);
       $("serverLabJson").textContent = JSON.stringify(payload, null, 2);
       $("serverLabStatus").textContent = "Server Event dohvaćen. Prikazana su samo polja koja je API vratio.";
     } catch (error) {

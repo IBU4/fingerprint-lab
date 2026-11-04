@@ -35,7 +35,7 @@ export async function onRequestPost({ request, env }) {
   const match = /^(\d{13})\.[A-Za-z0-9_-]{4,114}$/.exec(eventId);
   if (!match) return json({ error: "invalid_event_id" }, 400);
   const age = Date.now() - Number(match[1]);
-  if (age < -60000 || age > 300000)
+  if (age < -60000 || age > 20000)
     return json({ error: "event_outside_auto_window" }, 403);
 
   const apiKey = typeof env.FP_SERVER_API_KEY === "string"

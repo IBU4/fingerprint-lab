@@ -110,6 +110,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <section class="box" aria-live="polite">
 <h2>02 / Rezultat</h2>
 <div id="status" class="status">Spremno za test</div>
+<div class="field"><span>Confidence</span><strong id="confidence">—</strong></div>
 <div class="field"><span>Visitor ID</span><strong id="visitor">—</strong></div>
 <div class="field"><span>Event ID</span><strong id="event">—</strong></div>
 <div class="field"><span>Suspect Score</span><strong id="score" class="score">—</strong></div>
@@ -240,6 +241,11 @@ function formatSeenAt(timestamp) {
     hour: "2-digit", minute: "2-digit", second: "2-digit"
   });
 }
+function formatConfidence(value) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1)
+    return "—";
+  return new Intl.NumberFormat("hr-HR", { maximumFractionDigits: 2 }).format(value * 100) + " %";
+}
 function showServerIdentity(identity) {
   show("visitorFound", typeof identity?.visitorFound === "boolean"
     ? identity.visitorFound ? "Da" : "Ne" : null);
@@ -281,11 +287,13 @@ window.addEventListener("fingerprint-lab:ruleset-evaluated", ({ detail }) => {
   if (typeof detail.score === "number" && Number.isFinite(detail.score) && detail.score >= 0)
     record.serverScore = detail.score;
   record.serverIdentity = {
+    confidence: detail.confidence,
     visitorFound: detail.visitorFound,
     firstSeenAt: detail.firstSeenAt,
     lastSeenAt: detail.lastSeenAt
   };
   showScore(record.serverScore ?? record.score, record.serverDecision);
+  show("confidence", formatConfidence(record.serverIdentity.confidence));
   showServerIdentity(record.serverIdentity);
 });
 function ready() {
@@ -304,7 +312,7 @@ function compare() {
 function showResult() {
   const record = latest[mode];
   if (!record) {
-    ["visitor", "event", "timing"].forEach(id => show(id, null));
+    ["visitor", "event", "timing", "confidence"].forEach(id => show(id, null));
     showScore(null);
     showServerIdentity(null);
     $("json").textContent = "Pokreni identifikaciju za prikaz JSON odgovora.";
@@ -313,6 +321,7 @@ function showResult() {
     setStatus("Spremno: " + modes[mode].title);
   } else {
     show("visitor", record.vid || "(nije vraćen)");
+    show("confidence", formatConfidence(record.serverIdentity?.confidence));
     show("event", record.event);
     showScore(record.serverScore ?? record.score, record.serverDecision);
     showServerIdentity(record.serverIdentity);

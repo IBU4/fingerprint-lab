@@ -61,6 +61,7 @@
           eventId,
           label,
           score: typeof payload.suspect_score === "number" ? payload.suspect_score : null,
+          confidence: typeof identity.confidence?.score === "number" ? identity.confidence.score : null,
           visitorFound: typeof identity.visitor_found === "boolean" ? identity.visitor_found : null,
           firstSeenAt: identity.first_seen_at ?? null,
           lastSeenAt: identity.last_seen_at ?? null

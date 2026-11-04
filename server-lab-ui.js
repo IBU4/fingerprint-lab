@@ -55,11 +55,15 @@
       $("serverLabDecision").hidden = false;
     }
     if (payload?.event_id === eventId) {
+      const identity = payload.identification || {};
       window.dispatchEvent(new CustomEvent("fingerprint-lab:ruleset-evaluated", {
         detail: {
           eventId,
           label,
-          score: typeof payload.suspect_score === "number" ? payload.suspect_score : null
+          score: typeof payload.suspect_score === "number" ? payload.suspect_score : null,
+          visitorFound: typeof identity.visitor_found === "boolean" ? identity.visitor_found : null,
+          firstSeenAt: identity.first_seen_at ?? null,
+          lastSeenAt: identity.last_seen_at ?? null
         }
       }));
     }

@@ -118,7 +118,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 </section>
 <section class="box wide">
 <h2>03 / Server Lab</h2>
-<p class="muted">Ručni dohvat događaja uključuje Smart Signals i serversku anti-fraud evaluaciju. Ako Event ID odgovara trenutačno prikazanom mjerenju, oznaka uz Suspect Score ažurira se prema odluci Rules Enginea (OK, CAPTCHA ili BLOCK 403), čak i ako je sam score nizak. Dohvat ne pokreće novo mjerenje i ne mijenja izvorne rezultate; stariji događaji ostaju dostupni za pregled.</p>
+<p class="muted">Nakon identifikacije automatski se dohvaća puni serverski JSON i osvježava Suspect Score te odluka Rules Enginea. Za ručni pregled prethodnih događaja i dalje su potrebni Event ID i token. Kopiranje i spremanje JSON-a ostaje dostupno.</p>
 <label class="field" for="serverLabEvent"><span>Event ID — automatski ili ručni unos</span></label>
 <input id="serverLabEvent" type="text" spellcheck="false" autocomplete="off" placeholder="event_id">
 <label class="field" for="serverLabToken"><span>Token</span></label>
@@ -258,8 +258,7 @@ window.addEventListener("fingerprint-lab:ruleset-evaluated", ({ detail }) => {
       $("event").textContent.trim() !== detail.eventId) return;
   const classes = { "OK": "score-ok", "CAPTCHA": "score-captcha", "BLOCK 403": "score-block" };
   const className = classes[detail.label];
-  if (!className) return;
-  record.serverDecision = { label: detail.label, className };
+  if (className) record.serverDecision = { label: detail.label, className };
   if (typeof detail.score === "number" && Number.isFinite(detail.score) && detail.score >= 0)
     record.serverScore = detail.score;
   showScore(record.serverScore ?? record.score, record.serverDecision);

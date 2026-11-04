@@ -11,6 +11,7 @@
   let running = false;
   let serverResult = null;
   let lastAgentEvent = "";
+  let autoSequence = 0;
 
   const validEventId = value => /^[a-zA-Z0-9._-]{8,128}$/.test(value);
   const updateButtons = () => {
@@ -43,14 +44,79 @@
     const value = String(access?.value || "").trim().toUpperCase();
     return value === "CAPTCHA" || value === "OK" ? value : null;
   };
+  // Shared rendering for automatic and manual Server API lookups.
+  const showServerResponse = (payload, eventId) => {
+    serverResult = payload;
+    const label = readRulesetDecision(payload);
+    if (label) {
+      const colors = { "OK": "score-ok", "CAPTCHA": "score-captcha", "BLOCK 403": "score-block" };
+      $("serverLabRisk").textContent = label;
+      $("serverLabRisk").className = "score " + colors[label];
+      $("serverLabDecision").hidden = false;
+    }
+    if (payload?.event_id === eventId) {
+      window.dispatchEvent(new CustomEvent("fingerprint-lab:ruleset-evaluated", {
+        detail: {
+          eventId,
+          label,
+          score: typeof payload.suspect_score === "number" ? payload.suspect_score : null
+        }
+      }));
+    }
+    $("serverLabJson").textContent = JSON.stringify(payload, null, 2);
+    updateButtons();
+  };
+
+  const autoFetch = async (eventId, sequence) => {
+    const isCurrent = () => sequence === autoSequence &&
+      $("event").textContent.trim() === eventId;
+    $("serverLabStatus").textContent = "Automatski dohvat serverskog odgovora…";
+    $("serverLabJson").textContent = "Čitanje Fingerprint Server API-ja…";
+    // A fresh event can briefly return 404 before becoming available.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt) await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 450 : 1100));
+      if (!isCurrent()) return;
+      try {
+        const response = await fetch("/server-lab/auto", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ event_id: eventId }),
+          credentials: "omit",
+          cache: "no-store",
+          referrerPolicy: "no-referrer"
+        });
+        const payload = await response.json();
+        if (!isCurrent()) return;
+        if (response.status === 404 && attempt < 2) {
+          $("serverLabStatus").textContent = "Događaj se obrađuje; ponavljam dohvat…";
+          continue;
+        }
+        if (!response.ok) {
+          $("serverLabStatus").textContent = "Automatski dohvat nije uspio (HTTP " + response.status + ").";
+          $("serverLabJson").textContent = JSON.stringify({ http_status: response.status, ...payload }, null, 2);
+          return;
+        }
+        showServerResponse(payload, eventId);
+        $("serverLabStatus").textContent = "Serverski odgovor automatski dohvaćen.";
+        return;
+      } catch (error) {
+        if (!isCurrent()) return;
+        $("serverLabStatus").textContent = "Pogreška automatskog dohvata.";
+        $("serverLabJson").textContent = (error?.name || "Error") + ": " +
+          (error?.message || String(error));
+        return;
+      }
+    }
+  };
   const syncAgentEvent = () => {
     const eventId = $("event").textContent.trim();
     if (eventId === lastAgentEvent) return;
     lastAgentEvent = eventId;
+    const sequence = ++autoSequence;
     if (!validEventId(eventId)) return;
     $("serverLabEvent").value = eventId;
     resetServerResult();
-    $("serverLabStatus").textContent = "Event ID iz posljednje identifikacije spreman.";
+    void autoFetch(eventId, sequence);
   };
   // Read only the existing result element; never modify the agent or its callbacks.
   new MutationObserver(syncAgentEvent).observe($("event"), {
@@ -58,6 +124,7 @@
   });
   syncAgentEvent();
   $("serverLabEvent").addEventListener("input", () => {
+    ++autoSequence;
     resetServerResult();
     $("serverLabStatus").textContent = "Ručni Event ID spreman za dohvat.";
   });
@@ -68,6 +135,7 @@
     const eventId = $("serverLabEvent").value.trim();
     const accessToken = $("serverLabToken").value;
     if (!validEventId(eventId) || !accessToken) return;
+    ++autoSequence;
     running = true;
     resetServerResult();
     $("serverLabStatus").textContent = "Dohvat u tijeku…";
@@ -94,26 +162,7 @@
         }, null, 2);
         return;
       }
-      serverResult = payload;
-      // The server indicator always reflects rule_action, never score-only estimates.
-      // Historical lookup stays read-only; only a matching visible event is updated.
-      const label = readRulesetDecision(payload);
-      if (label) {
-        const colors = { "OK": "score-ok", "CAPTCHA": "score-captcha", "BLOCK 403": "score-block" };
-        $("serverLabRisk").textContent = label;
-        $("serverLabRisk").className = "score " + colors[label];
-        $("serverLabDecision").hidden = false;
-      }
-      if (label && payload?.event_id === eventId) {
-        window.dispatchEvent(new CustomEvent("fingerprint-lab:ruleset-evaluated", {
-          detail: {
-            eventId,
-            label,
-            score: typeof payload.suspect_score === "number" ? payload.suspect_score : null
-          }
-        }));
-      }
-      $("serverLabJson").textContent = JSON.stringify(payload, null, 2);
+      showServerResponse(payload, eventId);
       $("serverLabStatus").textContent = "Server Event dohvaćen. Prikazana su samo polja koja je API vratio.";
     } catch (error) {
       $("serverLabStatus").textContent = "Mrežna ili parserska pogreška.";

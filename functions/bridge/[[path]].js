@@ -64,6 +64,10 @@ export async function onRequest({ request, env }) {
     "FPJS-Proxy-Secret","FPJS-Proxy-Client-IP","FPJS-Proxy-Forwarded-Host"
   ]) headers.delete(name);
 
+  // Forward the site origin expected by Fingerprint Pro Allowed Origins filtering.
+  // Referer remains stripped; cross-origin POST requests are rejected above.
+  headers.set("Origin", incoming.origin);
+
   if (isIdentification) {
     const cfIP = request.headers.get("cf-connecting-ip") || "";
     const pseudo = request.headers.get("cf-pseudo-ipv4");

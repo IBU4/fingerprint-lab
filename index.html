@@ -114,6 +114,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <div class="field"><span>Visitor ID</span><strong id="visitor">—</strong></div>
 <div class="field"><span>Event ID</span><strong id="event">—</strong></div>
 <div class="field"><span>Suspect Score</span><strong id="score" class="score">—</strong></div>
+<div class="field"><span>Aktivnost</span><strong id="activity">-</strong></div>
 <div class="field"><span>Visitor found</span><strong id="visitorFound">—</strong></div>
 <div class="field"><span>First seen</span><strong id="firstSeen">—</strong></div>
 <div class="field"><span>Last seen</span><strong id="lastSeen">—</strong></div>
@@ -225,6 +226,9 @@ function setStatus(message, type = "") {
 function show(id, value) {
   $(id).textContent = value === null || value === undefined || value === "" ? "—" : String(value);
 }
+function showActivity(value) {
+  $("activity").textContent = typeof value === "string" && value.trim() ? value : "-";
+}
 function getField(data, ...keys) {
   for (const key of keys) {
     if (data && data[key] !== null && data[key] !== undefined) return data[key];
@@ -284,6 +288,7 @@ window.addEventListener("fingerprint-lab:ruleset-evaluated", ({ detail }) => {
   const classes = { "OK": "score-ok", "CAPTCHA": "score-captcha", "BLOCK 403": "score-block" };
   const className = classes[detail.label];
   if (className) record.serverDecision = { label: detail.label, className };
+  record.serverActivity = detail.activity;
   if (typeof detail.score === "number" && Number.isFinite(detail.score) && detail.score >= 0)
     record.serverScore = detail.score;
   record.serverIdentity = {
@@ -293,6 +298,7 @@ window.addEventListener("fingerprint-lab:ruleset-evaluated", ({ detail }) => {
     lastSeenAt: detail.lastSeenAt
   };
   showScore(record.serverScore ?? record.score, record.serverDecision);
+  showActivity(record.serverActivity);
   show("confidence", formatConfidence(record.serverIdentity.confidence));
   showServerIdentity(record.serverIdentity);
 });
@@ -314,6 +320,7 @@ function showResult() {
   if (!record) {
     ["visitor", "event", "timing", "confidence"].forEach(id => show(id, null));
     showScore(null);
+    showActivity(null);
     showServerIdentity(null);
     $("json").textContent = "Pokreni identifikaciju za prikaz JSON odgovora.";
     $("copy").disabled = true;
@@ -324,6 +331,7 @@ function showResult() {
     show("confidence", formatConfidence(record.serverIdentity?.confidence));
     show("event", record.event);
     showScore(record.serverScore ?? record.score, record.serverDecision);
+    showActivity(record.serverActivity);
     showServerIdentity(record.serverIdentity);
     show("timing", record.elapsed + " ms · " + record.time);
     $("json").textContent = JSON.stringify(record.data, null, 2);

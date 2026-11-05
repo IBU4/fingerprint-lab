@@ -6,7 +6,8 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="color-scheme" content="dark">
 <meta name="referrer" content="no-referrer">
-<title>Fingerprint Lab — IBU4</title>
+<title>Browser Fingerprint and Tracking Lab — IBU4</title>
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
 <script>
 window.dataLayer = window.dataLayer || [];
 window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
@@ -25,7 +26,7 @@ window.FingerprintLabConsentBootstrapped = true;
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#1c3447,#0c1420 55%)}
 main{max-width:990px;margin:auto;padding:34px 18px 60px}
 header{padding:12px 0 25px}.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#6de5d1;font-weight:700}
-h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.04em;margin:14px 0}p{line-height:1.6;color:#b9c7d7}
+h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.04em;margin:14px 0}.hero-subtitle{font-size:clamp(16px,2.5vw,20px);color:#8be7da;margin:-5px 0 22px;line-height:1.4}p{line-height:1.6;color:#b9c7d7}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.box{background:#152333;border:1px solid #34475b;padding:22px;border-radius:16px;min-width:0}.wide{grid-column:1/-1}
 h2{font-size:17px;margin:0 0 15px}.muted,.foot{font-size:13px;color:#9cadbf}
 label.check{display:flex;align-items:start;gap:10px;font-size:14px;line-height:1.55;color:#c7d4e0}label.check input{margin-top:4px}
@@ -69,9 +70,10 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 <main>
 <header>
 <div class="eyebrow">IBU4 / independent browser research</div>
-<h1>Fingerprint Lab</h1>
-<p>Kontrolirano testiranje identifikacije preglednika kroz sesije i mrežne promjene. Usporedi izravni način i 1P Proxy. Identifikacija se pokreće isključivo ručno.</p>
-<p>Laboratorij je namijenjen i testiranju web-praćenja putem Google Analyticsa 4, uz usporedbu standardnog Google taga i 1P serverskog kanala. Analitika se uključuje samo uz zasebnu privolu.</p>
+<h1>Browser Fingerprint and Tracking Lab</h1>
+<p class="hero-subtitle">Browser Defence</p>
+<p>Testiramo identifikaciju preglednika pomoću servisa <strong>Fingerprint Pro</strong> kroz različite sesije i mrežne uvjete. Uspoređujemo izravni način (<strong>Direct</strong>) i <strong>1P Proxy</strong>. Test identifikacije pokreće se ručno.</p>
+<p>Za testiranje web-praćenja koristimo <strong>Google Analytics 4 (GA4)</strong> s dva odvojena kanala: <strong>1P Measurement Protocol (MP)</strong> i <strong>Google Tag Gateway (1P)</strong>. Koristi se samo jedan kanal, a GA4 se uključuje isključivo uz zasebnu privolu.</p>
 </header>
 <div class="grid">
 <section class="box">
@@ -164,7 +166,7 @@ a{color:#8be7da}@media(max-width:720px){.grid{grid-template-columns:1fr}.wide{gr
 
 <section class="box info-section" aria-labelledby="about-lab">
 <h2 id="about-lab">07 / O ovom laboratoriju</h2>
-<p><strong>Fingerprint Lab</strong> je osobni, nekomercijalni istraživački projekt. Nije oglašavan niti namijenjen indeksiranju u tražilicama. Nije povezan s pružateljima usluga koje testira.</p>
+<p><strong>Browser Fingerprint and Tracking Lab</strong> je osobni, nekomercijalni istraživački projekt. Nije oglašavan niti namijenjen indeksiranju u tražilicama. Nije povezan s pružateljima usluga koje testira.</p>
 <p>Test identifikacije pokreće se dobrovoljno, uz izbor načina <strong>Direct</strong> ili <strong>1P Proxy</strong>. Rezultati omogućuju usporedbu reakcija različitih preglednika i njihovih zaštita.</p>
 <p class="note"><strong>Važno:</strong> Fingerprint test pokreće se samo nakon potvrde i pritiska gumba. Google Analytics 4 zahtijeva zasebnu privolu. Pružatelj hostinga može obrađivati tehničke podatke o posjetu već pri otvaranju stranice, neovisno o testu.</p>
 

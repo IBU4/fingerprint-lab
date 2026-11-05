@@ -44,6 +44,20 @@
     const value = String(access?.value || "").trim().toUpperCase();
     return value === "CAPTCHA" || value === "OK" ? value : null;
   };
+  // Read activity text from the evaluated rule without executing the rule action.
+  function readRulesetActivity(payload) {
+    const action = payload?.rule_action;
+    if (!action || typeof action !== "object") return null;
+    const type = String(action.type || "").toLowerCase();
+    if (type === "block")
+      return typeof action.body === "string" && action.body.trim() ? action.body : null;
+    if (type !== "allow") return null;
+    const append = action.request_header_modifications?.append;
+    if (!Array.isArray(append)) return null;
+    const item = append.find(header =>
+      typeof header?.name === "string" && header.name.trim().toLowerCase() === "activity");
+    return typeof item?.value === "string" && item.value.trim() ? item.value : null;
+  }
   // Shared rendering for automatic and manual Server API lookups.
   const showServerResponse = (payload, eventId) => {
     serverResult = payload;
@@ -60,6 +74,7 @@
         detail: {
           eventId,
           label,
+          activity: readRulesetActivity(payload),
           score: typeof payload.suspect_score === "number" ? payload.suspect_score : null,
           confidence: typeof identity.confidence?.score === "number" ? identity.confidence.score : null,
           visitorFound: typeof identity.visitor_found === "boolean" ? identity.visitor_found : null,

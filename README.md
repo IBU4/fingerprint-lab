@@ -1,4 +1,4 @@
-# Fingerprint Lab.
+# Fingerprint Lab
 
 Personal, non-commercial browser research project. Not advertised or intended for search-engine indexing.
 

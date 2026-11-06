@@ -3,6 +3,8 @@
 const PUBLIC_KEY = "Frwke9hBtB2iD0ce1G4W";
 const DOWNLOAD = new RegExp("^/web/v4/" + PUBLIC_KEY + "(?:/[a-zA-Z0-9._-]+)?/?$");
 const LIMIT_BYTES = 262144;
+// Obfuscated v4 API GET routes: require several path segments and this workspace's public key.
+const API_GET_PATH = /^\/(?:[a-zA-Z0-9._~-]+\/){2,7}[a-zA-Z0-9._~-]+$/;
 
 function json(value, status = 200) {
   return new Response(JSON.stringify(value), {
@@ -24,7 +26,7 @@ export async function onRequest({ request, env }) {
       implementation: "experimental Pages Functions proxy",
       region: "eu",
       vendorProxySecretConfigured: !!env.PROXY_SECRET,
-      routes: "agent GET and v4 API POST"
+      routes: "agent GET, v4 API GET and POST"
     });
   }
 
@@ -35,17 +37,25 @@ export async function onRequest({ request, env }) {
     /^\/(?:[a-zA-Z0-9._~-]+\/)*[a-zA-Z0-9._~-]*$/.test(relativePath) &&
     !relativePath.startsWith("/web/");
 
-  if (!isScript && !isIdentification) {
+  // Forward only the agent's obfuscated GET URLs, not arbitrary server API paths.
+  const isApiGet = request.method === "GET" &&
+    relativePath.length <= 256 && API_GET_PATH.test(relativePath) &&
+    incoming.searchParams.get("q") === PUBLIC_KEY &&
+    !relativePath.startsWith("/web/");
+
+  if (!isScript && !isIdentification && !isApiGet) {
     return json({ error: "unsupported_route", method: request.method, path: relativePath }, 404);
   }
 
-  if (isIdentification) {
+  if (isIdentification || isApiGet) {
     const origin = request.headers.get("origin");
     if (origin && origin !== incoming.origin)
       return json({ error: "cross_origin_request_not_permitted" }, 403);
-    const contentLength = Number(request.headers.get("content-length") || "0");
-    if (contentLength > LIMIT_BYTES)
-      return json({ error: "request_too_large" }, 413);
+    if (isIdentification) {
+      const contentLength = Number(request.headers.get("content-length") || "0");
+      if (contentLength > LIMIT_BYTES)
+        return json({ error: "request_too_large" }, 413);
+    }
   }
 
   const target = new URL("https://" + (isScript ? "api.fpjs.io" : "eu.api.fpjs.io") + relativePath);
@@ -91,7 +101,7 @@ export async function onRequest({ request, env }) {
     responseHeaders.delete("access-control-allow-credentials");
     responseHeaders.set("x-lab-upstream-status", String(response.status));
     responseHeaders.set("x-content-type-options", "nosniff");
-    if (isIdentification) responseHeaders.set("cache-control", "no-store");
+    if (isIdentification || isApiGet) responseHeaders.set("cache-control", "no-store");
     console.log("fingerprint-lab proxy", request.method, relativePath, "upstream:", response.status);
     return new Response(response.body, { status: response.status, headers: responseHeaders });
   } catch (error) {

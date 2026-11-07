@@ -344,6 +344,9 @@ pre{
   let fpAgent = null;
   let lastPointerSample = 0;
   let pointerIdleTimer = null;
+  // Visible only after a manual start; not part of session data or exported JSON.
+  let networkContext = null;
+  let networkContextRequest = 0;
 
   const $ = id => document.getElementById(id);
 
@@ -482,8 +485,58 @@ pre{
     addProfileRow("Platforma", b.platform || "—");
     addProfileRow("Jezik", b.language || "—");
     addProfileRow("Timezone", b.timezone || "—");
+    if (networkContext) {
+      addProfileRow("IP adresa", networkContext.ip);
+      addProfileRow("Država IP adrese", networkContext.country);
+      addProfileRow("ASN", networkContext.asn);
+      addProfileRow("ASN organizacija", networkContext.organization);
+    }
     addProfileRow("Screen", b.screen || "—");
     addProfileRow("Viewport", b.viewport || "—");
+  }
+
+  async function loadNetworkContext() {
+    const version = ++networkContextRequest;
+    networkContext = {
+      ip: "učitavanje…", country: "učitavanje…",
+      asn: "učitavanje…", organization: "učitavanje…"
+    };
+    renderProfile();
+    try {
+      // Same-origin endpoint. No cookies or identifiers are sent deliberately.
+      const response = await fetch("/network-context", {
+        method: "GET", credentials: "omit", cache: "no-store",
+        headers: { "accept": "application/json" }
+      });
+      if (!response.ok) throw new Error("network-context unavailable");
+      const info = await response.json();
+      if (version !== networkContextRequest) return;
+      const country = typeof info.country === "string" ? info.country : "";
+      let countryLabel = "nije dostupno";
+      if (country === "T1") countryLabel = "Tor (T1; država nije dostupna)";
+      else if (country === "XX") countryLabel = "nepoznata (XX)";
+      else if (/^[A-Z]{2}$/.test(country)) {
+        countryLabel = country;
+        try {
+          const name = new Intl.DisplayNames(["hr"], { type: "region" }).of(country);
+          if (name && name !== country) countryLabel += " — " + name;
+        } catch {}
+      }
+      networkContext = {
+        ip: typeof info.ip === "string" && info.ip ? info.ip.slice(0, 100) : "nije dostupno",
+        country: countryLabel,
+        asn: Number.isSafeInteger(info.asn) && info.asn > 0 ? "AS" + info.asn : "nije dostupno",
+        organization: typeof info.asOrganization === "string" && info.asOrganization
+          ? info.asOrganization.slice(0, 200) : "nije dostupno"
+      };
+    } catch {
+      if (version !== networkContextRequest) return;
+      networkContext = {
+        ip: "nije dostupno", country: "nije dostupno",
+        asn: "nije dostupno", organization: "nije dostupno"
+      };
+    }
+    renderProfile();
   }
 
   function elapsed() {
@@ -596,7 +649,7 @@ pre{
 
     const id = getOrCreateTrackingId();
     $("trackingId").textContent = id;
-    renderProfile();
+    loadNetworkContext();
 
     $("status").textContent =
       "Praćenje je aktivno. Događaji se prikazuju u ovoj kartici i ne šalju se analitičkom servisu.";
